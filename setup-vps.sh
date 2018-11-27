@@ -1,13 +1,5 @@
 #!/bin/bash
 
-# adicionar chave ssh do usuário deploy no gitlab, bitbucket, etc
-# containers:
-# 	mysql
-# 	nextcloud
-# 	nginx-proxy
-# 	portainer
-# 	codions.com
-
 # Outputs install log line
 function setup_log() {
     echo -e "\033[1;32m$*\033[m"
