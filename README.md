@@ -7,7 +7,7 @@ Executa as seguintes etapas de configuração:
 * Definição de timezone
 * Configurações do usuário root
 * Adiciona novo usuário padrão para deploy com privilégio total
-* Instala git, zip, unzip, docker, docker-compose
+* Instala git, zip, unzip, curl, docker e docker-compose
 * Adiciona github, gitlab e bitbucket aos hosts confiáveis
 
 Testado no Ubuntu 18.04 com 4GB RAM, mas pode ser utilizado em distribuições similares.
