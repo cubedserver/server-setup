@@ -18,6 +18,9 @@ Testado no Ubuntu 18.04 com 4GB RAM, mas pode ser utilizado em distribuições s
 curl -fsSL https://git.io/fpgbw -o setup-vps.sh && bash setup-vps.sh
 ```
 
+## Importante
+Para que você consiga realizar deploy de aplicações utilizando git e alguma ferramente de implantação como o [deployer](https://deployer.org/), será necessário adicionar a chave pública (id_rsa.pub) do usuário criado no seu servidor VCS (bitbucket, gitlab, github, etc).
+
 ## Licença
 
 ```

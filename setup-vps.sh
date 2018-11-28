@@ -5,6 +5,10 @@ function setup_log() {
     echo -e "\033[1;32m$*\033[m"
 }
 
+function setup_alert() {
+    echo -e "\e[31m$*\e[m"
+}
+
 sleep 1
 
 # necessário ser root
@@ -35,7 +39,7 @@ passwd
 # cria chave SSH do root caso não exista
 if [ ! -e /root/.ssh/id_rsa ]; then
    setup_log "Criando chaves SSH..."
-   ssh-keygen
+   ssh-keygen -t rsa
 fi
 
 # criar arquivo known_hosts caso não exista
@@ -59,40 +63,40 @@ ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 
 # pedir nome de usuário do novo usuário padrão
-read -r -p "Insira um username para o usuário que fará deploy de aplicações (Ex.: deployer):" USERNAME
-if [ -z "$USERNAME" ]; then
+read -r -p "Insira um username para o usuário que fará deploy de aplicações (Ex.: deployer):" DEPLOYER_USERNAME
+if [ -z "$DEPLOYER_USERNAME" ]; then
     echo "Nenhum nome de usuário inserido, abortando." 1>&2
     exit 1
 fi
 
 # pedir nome de "vendor" que será utilizado como prefixo nas pastas de apps, storage e backups. Ex.: nome de um organização como google ou codions
-read -r -p "Insira um nome de pasta padrão onde ficarão os apps, storage e backups (Ex.: suaempresa): " VENDOR
-if [ -z "$VENDOR" ]; then
+read -r -p "Insira um nome de pasta padrão onde ficarão os apps, storage e backups (Ex.: suaempresa): " VENDOR_NAME
+if [ -z "$VENDOR_NAME" ]; then
     echo "Nenhum nome de pasta padrão inserido, abortando." 1>&2
     exit 1
 fi
 
 # adiciona usuário padrão
 setup_log "Criando usuário padrão..."
-useradd -s /bin/bash -d /home/$USERNAME -m -U $USERNAME
-passwd $USERNAME
+useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
+passwd $DEPLOYER_USERNAME
 
 # copia SSH authorized_keys
 setup_log "Copiando a chave pública SSH para diretório home do novo usuário padrão..."
-if [ ! -d /home/$USERNAME/.ssh ]; then
-	mkdir /home/$USERNAME/.ssh
+if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
+	mkdir /home/$DEPLOYER_USERNAME/.ssh
 fi
-cp -r /root/.ssh/* /home/$USERNAME/.ssh/
-chown -R $USERNAME.$USERNAME /home/$USERNAME/.ssh
+cp -r /root/.ssh/* /home/$DEPLOYER_USERNAME/.ssh/
+chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
 
 # adiciona usuário padrão aos sudoers
-setup_log "Adicionando $USERNAME aos sudoers com todos os privilégios..."
-echo "$USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USERNAME
-chmod 0440 /etc/sudoers.d/$USERNAME
+setup_log "Adicionando $DEPLOYER_USERNAME aos sudoers com todos os privilégios..."
+echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
+chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
 
 # instala git, zip, unzip
 setup_log "Instalando programas essenciais (git, zip, unzip, curl)..."
-apt-get install git zip unzip curl
+apt-get install -y git zip unzip curl wget
 
 setup_log "Instalando docker..."
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
@@ -102,19 +106,22 @@ curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compo
 chmod +x /usr/local/bin/docker-compose
 
 setup_log "Adicionando usuário padrão no grupo www-data..."
-usermod -aG www-data $USERNAME
+usermod -aG www-data $DEPLOYER_USERNAME
 
 setup_log "Adicionando usuário padrão no grupo docker..."
-usermod -aG docker $USERNAME
+usermod -aG docker $DEPLOYER_USERNAME
 
 setup_log "Criando diretório de trabalho para os containers (aplicações)..."
-mkdir -p /var/$VENDOR/apps
+mkdir -p /var/$VENDOR_NAME/apps
 
 setup_log "Criando diretório de trabalho para os volumes (storage) dos containers..."
-mkdir -p /var/$VENDOR/storage
+mkdir -p /var/$VENDOR_NAME/storage
 
 setup_log "Criando diretório de trabalho para os backups..."
-mkdir -p /var/$VENDOR/backups
+mkdir -p /var/$VENDOR_NAME/backups
+
+setup_log "Mudando proprietário do diretório de trabalho de root para $DEPLOYER_USERNAME..."
+chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /var/$VENDOR_NAME
 
 # cleanup
 setup_log "Limpando..."
@@ -123,3 +130,4 @@ apt-get clean
 
 # concluído
 setup_log "Concluído! Por favor, reinicie o servidor para aplicar algumas mudanças."
+setup_alert "Importante: Adicione a chave id_rsa.pub do usuário $DEPLOYER_USERNAME no seu servidor VCS (bitbucket, gitlab, github, etc) para conseguir fazer deploy de aplicações com git."
