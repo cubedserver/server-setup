@@ -10,7 +10,7 @@ Executa as seguintes etapas de configuração:
 * Instala git, zip, unzip, curl, docker e docker-compose
 * Adiciona github, gitlab e bitbucket aos hosts confiáveis
 
-Testado no Ubuntu 18.04 com 4GB RAM, mas pode ser utilizado em distribuições similares.
+Testado em um droplet rodando [Ubuntu Server 18.04 LTS](https://www.ubuntu.com/download/server) com 4GB RAM, mas pode ser utilizado em distribuições similares.
 
 ## Uso
 
@@ -20,6 +20,14 @@ curl -fsSL https://git.io/fpgbw -o setup-vps.sh && bash setup-vps.sh
 
 ## Importante
 Para que você consiga realizar deploy de aplicações utilizando git e alguma ferramente de implantação como o [deployer](https://deployer.org/), será necessário adicionar a chave pública (id_rsa.pub) do usuário criado no seu servidor VCS (bitbucket, gitlab, github, etc).
+
+## Dicas
+
+Para não ter que digitar a senha todas as vezes que precisar acessar o servidor remoto por SSH ou ter fazer algum deploy, digite o comando a baixo. Isso adicionará sua chave pública no arquivo ```authorized_keys``` do novo usuário criado.
+
+```
+ssh-copy-id <USERNAME DO USUARIO CRIADO>@<IP DO SERVIDOR>
+```
 
 ## Licença
 

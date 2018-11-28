@@ -5,12 +5,6 @@ function setup_log() {
     echo -e "\033[1;32m$*\033[m"
 }
 
-function setup_alert() {
-    echo -e "\e[31m$*\e[m"
-}
-
-sleep 1
-
 # necessário ser root
 if [ "$(id -u)" != "0" ]; then
    echo "Desculpe! Este script deve ser executado como root." 1>&2
@@ -56,9 +50,13 @@ fi
 
 
 # adiciona bitbucket.org, gitlab.com, github.com
-setup_log "Adicionando bitbucket.org, gitlab.com e github.com aos hosts confiáveis..."
+setup_log "Adicionando bitbucket.org aos hosts confiáveis..."
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
+
+setup_log "Adicionando gitlab.com aos hosts confiáveis..."
 ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
+
+setup_log "Adicionando github.com aos hosts confiáveis..."
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 
@@ -130,4 +128,3 @@ apt-get clean
 
 # concluído
 setup_log "Concluído! Por favor, reinicie o servidor para aplicar algumas mudanças."
-setup_alert "Importante: Adicione a chave id_rsa.pub do usuário $DEPLOYER_USERNAME no seu servidor VCS (bitbucket, gitlab, github, etc) para conseguir fazer deploy de aplicações com git."
