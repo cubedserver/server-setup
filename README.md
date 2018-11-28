@@ -18,6 +18,8 @@ Eu sei que essa não é a melhor forma de fazer isso, especialmente se executado
 
 ```
 # bash <(curl -o - https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh)
+
+curl -fsSL https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh -o get-docker.sh && bash get-docker.sh
 ```
 
 ## Licença

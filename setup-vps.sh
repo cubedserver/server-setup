@@ -42,13 +42,13 @@ fi
 if [ ! -e /root/.ssh/known_hosts ]; then
    setup_log "Criando arquivo known_hosts..."
    touch /root/.ssh/known_hosts
-else
+fi
 
 # criar arquivo authorized_keys caso não exista
 if [ ! -e /root/.ssh/authorized_keys ]; then
 	setup_log "Criando arquivo authorized_keys..."
 	touch /root/.ssh/authorized_keys
-else
+fi
 
 
 # adiciona bitbucket.org, gitlab.com, github.com
@@ -91,8 +91,8 @@ echo "$USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$USERNAME
 chmod 0440 /etc/sudoers.d/$USERNAME
 
 # instala git, zip, unzip
-setup_log "Instalando git zip unzip..."
-apt-get install git zip unzip
+setup_log "Instalando programas essenciais (git, zip, unzip, curl)..."
+apt-get install git zip unzip curl
 
 setup_log "Instalando docker..."
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
