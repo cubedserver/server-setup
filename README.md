@@ -44,7 +44,7 @@ Caso esteja procurando por boilerplate para configuração rápida de containers
 
 ## Créditos
 
-[Fábio Assunção](https://github.com/fabioassuncao) e todos os [contribuidores](https://github.com/setup-vps/graphs/contributors).
+[Fábio Assunção](https://github.com/fabioassuncao) e todos os [contribuidores](https://github.com/fabioassuncao/setup-vps/graphs/contributors).
 
 ## Licença
 
