@@ -14,12 +14,8 @@ Testado no Ubuntu 18.04 com 4GB RAM, mas pode ser utilizado em distribuições s
 
 ## Uso
 
-Eu sei que essa não é a melhor forma de fazer isso, especialmente se executado como root, mas nada que um pouco de cautela e bom senso não resolva.
-
 ```
-# bash <(curl -o - https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh)
-
-curl -fsSL https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh -o get-docker.sh && bash get-docker.sh
+curl -fsSL https://git.io/fpgbw -o setup-vps.sh && bash setup-vps.sh
 ```
 
 ## Licença
