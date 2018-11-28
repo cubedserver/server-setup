@@ -123,10 +123,10 @@ chmod +x /usr/local/bin/docker-compose
 
 echo "\n"
 
-setup_log "Adicionando usuário padrão no grupo www-data..."
+setup_log "Adicionando usuário $DEPLOYER_USERNAME no grupo www-data..."
 usermod -aG www-data $DEPLOYER_USERNAME
 
-setup_log "Adicionando usuário padrão no grupo docker..."
+setup_log "Adicionando usuário $DEPLOYER_USERNAME no grupo docker..."
 usermod -aG docker $DEPLOYER_USERNAME
 
 setup_log "Criando diretório de trabalho para os containers (aplicações)..."

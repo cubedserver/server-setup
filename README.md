@@ -29,6 +29,23 @@ Para não ter que digitar a senha todas as vezes que precisar acessar o servidor
 ssh-copy-id <USERNAME DO USUARIO CRIADO>@<IP DO SERVIDOR>
 ```
 
+### Docker boilerplate server
+
+Caso esteja procurando por boilerplate para configuração rápida de containers docker para proxy reverso com nginx, configuração automática de virtualhosts e geração de certificados SSL com Let's Encrypt, veja o repositório [fabioassuncao/docker-boilerplate-nginx-proxy](https://github.com/fabioassuncao/docker-boilerplate-nginx-proxy)
+
+## Contribuição
+
+1. Fork este repositório!
+2. Crie sua feature a partir da branch **develop**: `git checkout -b feature/my-new-feature`
+3. Escreva e comente seu código.
+4. Commit suas alterações: `git commit -am 'Add some feature'`
+5. Faça um `push` para a branch: `git push origin feature/my-new-feature`
+6. Faça um `pull request` para a branch **develop**
+
+## Créditos
+
+[Fábio Assunção](https://github.com/fabioassuncao) e todos os [contribuidores](https://github.com/setup-vps/graphs/contributors).
+
 ## Licença
 
 ```
