@@ -118,7 +118,7 @@ curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 echo -e "\n"
 
 setup_log "Instalando docker-compose..."
-curl -L "https://github.com/docker/compose/releases/download/1.23.1/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
+curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 echo -e "\n"
