@@ -28,11 +28,14 @@ if [ "$GO" != "S" ]; then
 fi
 
 # define timezone
-setup_log "Updating packages and setting the time zone..."
+setup_log "Updating packages and setting the timezone..."
 apt-get update -y
-apt-get dist-upgrade
-apt-get autoremove
-dpkg-reconfigure tzdata
+
+if [[ -z $TIMEZONE ]]; then
+  dpkg-reconfigure tzdata
+else
+  timedatectl set-timezone $TIMEZONE
+fi
 
 echo -e "\n"
 
@@ -175,8 +178,8 @@ setup_log "Creating symbolic link to the backups folder..."
 ln -s /var/$VENDOR_NAME/backups /home/$DEPLOYER_USERNAME/storage
 
 setup_log "Cleaning up..."
-apt-get autoremove
-apt-get clean
+apt-get autoremove -y
+apt-get clean -y
 
 # Finish
 setup_log "Concluded! Please restart the server to apply some changes."
