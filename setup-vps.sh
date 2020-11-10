@@ -1,9 +1,13 @@
 #!/bin/bash
 
+if [ -f "./.env" ]; then
+   source ./.env
+fi
+
+
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
   DOCKER_COMPOSE_VERSION="1.27.4"
 fi
-
 
 # Outputs install log line
 function setup_log() {
