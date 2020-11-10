@@ -1,13 +1,23 @@
 #!/bin/bash
 
-if [ -f "./.env" ]; then
-   source ./.env
-fi
-
+ENV_TEMPLATE="https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/.env.example"
 
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
   DOCKER_COMPOSE_VERSION="1.27.4"
 fi
+
+setup_log "Do you want to use a file of environment variables to go faster?"
+read -r -p "Type 'y' to download and edit the file or 'n' to skip: " USE_TEMPLATE
+if [ $USE_TEMPLATE != "y" ]; then
+  curl -fsSL $ENV_TEMPLATE -o .env
+  nano .env
+fi
+
+# If there is a env file, source it
+if [ -f "./.env" ]; then
+   source ./.env
+fi
+
 
 # Outputs install log line
 function setup_log() {
@@ -21,8 +31,8 @@ fi
 
 # prompt
 setup_log "This script will run the initial settings on this server."
-read -r -p "Type 'S' to continue or any key to cancel: " GO
-if [ "$GO" != "S" ]; then
+read -r -p "Type 'y' to continue or 'n' to cancel: " GO
+if [ "$GO" != "y" ]; then
     setup_log "Aborting." 1>&2
     exit 1
 fi
