@@ -8,7 +8,8 @@ fi
 
 setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_TEMPLATE
-if [ $USE_TEMPLATE != "Y" ]; then
+if [ $USE_TEMPLATE == "Y" ]; then
+  setup_log "☁️ Downloading template ..."
   curl -fsSL $ENV_TEMPLATE -o .env
   nano .env
 fi
