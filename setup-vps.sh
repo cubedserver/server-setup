@@ -29,7 +29,7 @@ fi
 
 # define timezone
 setup_log "Updating packages and setting the time zone..."
-apt-get update
+apt-get update -y
 apt-get dist-upgrade
 apt-get autoremove
 dpkg-reconfigure tzdata
@@ -130,7 +130,7 @@ echo -e "\n"
 
 # instala git, zip, unzip
 setup_log "Installing essential programs (git zip unzip curl wget acl)"
-apt-get install -yq git zip unzip curl wget acl
+apt-get install -y git zip unzip curl wget acl
 
 echo -e "\n"
 
