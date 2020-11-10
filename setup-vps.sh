@@ -6,7 +6,7 @@ if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
   DOCKER_COMPOSE_VERSION="1.27.4"
 fi
 
-setup_log "Do you want to use a file of environment variables to go faster?"
+setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'y' to download and edit the file or 'n' to skip: " USE_TEMPLATE
 if [ $USE_TEMPLATE != "y" ]; then
   curl -fsSL $ENV_TEMPLATE -o .env
@@ -25,20 +25,20 @@ function setup_log() {
 }
 
 if [ "$(id -u)" != "0" ]; then
-   setup_log "Sorry! This script must be run as root." 1>&2
+   setup_log "❌ Sorry! This script must be run as root." 1>&2
    exit 1
 fi
 
 # prompt
-setup_log "This script will run the initial settings on this server."
+setup_log "🚀 This script will run the initial settings on this server."
 read -r -p "Type 'y' to continue or 'n' to cancel: " GO
 if [ "$GO" != "y" ]; then
-    setup_log "Aborting." 1>&2
+    setup_log "❌ Aborting." 1>&2
     exit 1
 fi
 
 # define timezone
-setup_log "Updating packages and setting the timezone..."
+setup_log "🕒 Updating packages and setting the timezone..."
 apt-get update -y
 
 if [[ -z $TIMEZONE ]]; then
@@ -50,7 +50,7 @@ fi
 echo -e "\n"
 
 # define senha root
-setup_log "Setting the root password..."
+setup_log "🔑 Setting the root password..."
 
 if [[ -z $ROOT_PASSWORD ]]; then
   passwd
@@ -60,41 +60,41 @@ fi
 
 # cria chave SSH do root caso não exista
 if [ ! -e /root/.ssh/id_rsa ]; then
-   setup_log "Creating SSH Keys..."
+   setup_log "🔑 Creating SSH Keys..."
    ssh-keygen -t rsa
 fi
 
 # criar arquivo known_hosts caso não exista
 if [ ! -e /root/.ssh/known_hosts ]; then
-   setup_log "Creating file known_hosts..."
+   setup_log "📄 Creating file known_hosts..."
    touch /root/.ssh/known_hosts
 fi
 
 # criar arquivo authorized_keys caso não exista
 if [ ! -e /root/.ssh/authorized_keys ]; then
-  setup_log "Creating file authorized_keys..."
+  setup_log "📄 Creating file authorized_keys..."
   touch /root/.ssh/authorized_keys
 fi
 
 echo -e "\n"
 
 # adiciona bitbucket.org, gitlab.com, github.com
-setup_log "Adding bitbucket.org to trusted hosts..."
+setup_log "⚪ Adding bitbucket.org to trusted hosts..."
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
-setup_log "Adding gitlab.com to trusted hosts..."
+setup_log "⚪ Adding gitlab.com to trusted hosts..."
 ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 
-setup_log "Adding github.com to trusted hosts..."
+setup_log "⚪ Adding github.com to trusted hosts..."
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 echo -e "\n"
 
 # pedir nome de usuário do novo usuário padrão
 if [[ -z $DEPLOYER_USERNAME ]]; then
-  read -r -p "Enter a username for the user who will deploy applications (e.g. deployer):" DEPLOYER_USERNAME
+  read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer):" DEPLOYER_USERNAME
   if [ -z $DEPLOYER_USERNAME ]; then
-      echo "No user name entered, aborting." 1>&2
+      echo "❌ No user name entered, aborting." 1>&2
       exit 1
   fi
 fi
@@ -103,9 +103,9 @@ echo -e "\n"
 
 # pedir nome de "vendor" que será utilizado como prefixo nas pastas de apps, storage e backups. Ex.: nome de um organização como google ou codions
 if [[ -z $VENDOR_NAME ]]; then
-  read -r -p "Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
+  read -r -p "🏢 Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
   if [[ -z $VENDOR_NAME ]]; then
-      echo "No default folder name entered, aborting." 1>&2
+      echo "❌ No default folder name entered, aborting." 1>&2
       exit 1
   fi
 fi
@@ -113,7 +113,7 @@ fi
 echo -e "\n"
 
 # adiciona usuário padrão
-setup_log "Creating standard user..."
+setup_log "👤 Creating standard user..."
 useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
 
 if [[ -z $DEPLOYER_PASSWORD ]]; then
@@ -125,7 +125,7 @@ fi
 echo -e "\n"
 
 # copia SSH authorized_keys
-setup_log "Copying the SSH public key to the home directory of the new default user..."
+setup_log "🗂️ Copying the SSH public key to the home directory of the new default user..."
 if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
   mkdir /home/$DEPLOYER_USERNAME/.ssh
 fi
@@ -135,61 +135,61 @@ chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
 echo -e "\n"
 
 # adiciona usuário padrão aos sudoers
-setup_log "Adding $DEPLOYER_USERNAME to sudoers with full privileges..."
+setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges..."
 echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
 chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
 
 echo -e "\n"
 
 # instala git, zip, unzip
-setup_log "Installing essential programs (git zip unzip curl wget acl)"
+setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
 apt-get install -y git zip unzip curl wget acl
 
 echo -e "\n"
 
-setup_log "Installing docker..."
+setup_log "🐳 Installing docker..."
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 
 echo -e "\n"
 
-setup_log "Installing docker-compose..."
+setup_log "📦 Installing docker-compose..."
 curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 echo -e "\n"
 
-setup_log "Adding user $DEPLOYER_USERNAME to group www-data..."
+setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data..."
 usermod -aG www-data $DEPLOYER_USERNAME
 
-setup_log "Adding user $DEPLOYER_USERNAME to the docker group..."
+setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group..."
 usermod -aG docker $DEPLOYER_USERNAME
 
-setup_log "Creating working directory for containers (applications)..."
+setup_log "📂 Creating working directory for containers (applications)..."
 mkdir -p /var/$VENDOR_NAME/apps
 
-setup_log "Creating working directory for container volumes (storage)..."
+setup_log "📂 Creating working directory for container volumes (storage)..."
 mkdir -p /var/$VENDOR_NAME/storage
 
-setup_log "Creating working directory for backups..."
+setup_log "📂 Creating working directory for backups..."
 mkdir -p /var/$VENDOR_NAME/backups
 
-setup_log "Changing owner of the root working directory to $DEPLOYER_USERNAME..."
+setup_log "🔁 Changing owner of the root working directory to $DEPLOYER_USERNAME..."
 chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /var/$VENDOR_NAME
 
 echo -e "\n"
 
-setup_log "Creating symbolic link to the application folder..."
+setup_log "🔗 Creating symbolic link to the application folder..."
 ln -s /var/$VENDOR_NAME/apps /home/$DEPLOYER_USERNAME/apps
 
-setup_log "Creating symbolic link to the storage folder..."
+setup_log "🔗 Creating symbolic link to the storage folder..."
 ln -s /var/$VENDOR_NAME/storage /home/$DEPLOYER_USERNAME/storage
 
-setup_log "Creating symbolic link to the backups folder..."
+setup_log "🔗 Creating symbolic link to the backups folder..."
 ln -s /var/$VENDOR_NAME/backups /home/$DEPLOYER_USERNAME/storage
 
-setup_log "Cleaning up..."
+setup_log "🧹 Cleaning up..."
 apt-get autoremove -y
 apt-get clean -y
 
 # Finish
-setup_log "Concluded! Please restart the server to apply some changes."
+setup_log "✅ Concluded! Please restart the server to apply some changes."
