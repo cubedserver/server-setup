@@ -86,6 +86,7 @@ function setup_proxy {
     fi
 }
 
+greet
 
 setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_ENV_TEMPLATE
