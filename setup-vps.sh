@@ -114,7 +114,7 @@ function setup_proxy() {
     WORKDIR=/var/${VENDOR_NAME}/apps/core
 
     if [ -d $WORKDIR ]; then
-      setup_log "🗑️ Deleting previous files from an unsuccessful previous attempt"
+      setup_log "🗑️  Deleting previous files from an unsuccessful previous attempt"
       rm -rf $WORKDIR
     fi
 
@@ -280,7 +280,7 @@ if [[ -z $DEPLOYER_USERNAME ]]; then
   read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer): " DEPLOYER_USERNAME
   if [ -z $DEPLOYER_USERNAME ]; then
       DEPLOYER_USERNAME=deployer
-      setup_log "ℹ️ Using default value ${DEPLOYER_USERNAME}"
+      setup_log "ℹ️  Using default value ${DEPLOYER_USERNAME}"
   fi
 fi
 
@@ -288,7 +288,7 @@ if [[ -z $VENDOR_NAME ]]; then
   read -r -p "🏢 Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
   if [[ -z $VENDOR_NAME ]]; then
       VENDOR_NAME=projects
-      setup_log "ℹ️ Using default value ${VENDOR_NAME}"
+      setup_log "ℹ️  Using default value ${VENDOR_NAME}"
   fi
 fi
 
@@ -342,7 +342,7 @@ for WORKDIR in $WORKDIRS; do
   WORKDIR_FULL=${ROOT_WORKDIR}/$VENDOR_NAME/$WORKDIR
 
   if [ -d $WORKDIR_FULL ]; then
-      setup_log "🗑️ Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
+      setup_log "🗑️  Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
       rm -rf $WORKDIR_FULL
   fi
 
@@ -352,9 +352,9 @@ for WORKDIR in $WORKDIRS; do
 	setup_log "🔗 Creating symbolic link for ${WORKDIR_FULL}"
 	ln -sfn $WORKDIR_FULL /home/$DEPLOYER_USERNAME/$WORKDIR
 
-done
+  wordwrap
 
-wordwrap
+done
 
 if $INSTALL_PROXY ; then
     setup_proxy $BOILERPLATE
