@@ -17,6 +17,10 @@ if [[ -z $SHOW_LOGS ]]; then
     SHOW_LOGS=true
 fi
 
+if [[ -z $INSTALL_PROXY ]]; then
+    INSTALL_PROXY=true
+fi
+
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
     DOCKER_COMPOSE_VERSION="1.27.4"
 fi
@@ -78,6 +82,14 @@ function create_docker_network() {
     docker network ls|grep $NETWORK_NAME > /dev/null || docker network create $NETWORK_NAME
 }
 
+# Remove images and containers from a previous unsuccessful attempt
+function docker_reset() {
+  CONTAINERS=$(docker container ls -aq)
+  docker container stop $CONTAINERS
+  docker container rm $CONTAINERS
+  docker image prune --force
+}
+
 function setup_proxy() {
 
   BOILERPLATE=$1
@@ -94,7 +106,14 @@ function setup_proxy() {
 
     FILE_ZIPED=${ORIGINAL_NAME}.zip
     WORKDIR=/var/${VENDOR_NAME}/apps/core
-    
+
+    docker_reset
+
+    if [ -d $WORKDIR ]; then
+      setup_log "🗑️ Deleting previous files from an unsuccessful previous attempt"
+      rm -rf $WORKDIR
+    fi
+
     setup_log "📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
     mkdir -p $WORKDIR
 
@@ -172,14 +191,14 @@ if [ -f "./.env" ]; then
    source ./.env
 fi
 
-# define timezone
+# Update timezone
 setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -y
 timedatectl set-timezone $TIMEZONE
 
 wordwrap
 
-# define senha root
+# Set root password
 setup_log "🔑 Setting the root password"
 
 if [[ -z $ROOT_PASSWORD ]]; then
@@ -188,19 +207,19 @@ else
   echo $ROOT_PASSWORD | passwd > /dev/null 2>&1
 fi
 
-# cria chave SSH do root caso não exista
+# Creates SSH key from root if one does not exist
 if [ ! -e /root/.ssh/id_rsa ]; then
    setup_log "🔑 Creating SSH Keys"
    ssh-keygen -t rsa
 fi
 
-# criar arquivo known_hosts caso não exista
+# Create known_hosts file if it doesn't exist
 if [ ! -e /root/.ssh/known_hosts ]; then
    setup_log "📄 Creating file known_hosts"
    touch /root/.ssh/known_hosts
 fi
 
-# criar arquivo authorized_keys caso não exista
+# Create authorized_keys file if it doesn't exist
 if [ ! -e /root/.ssh/authorized_keys ]; then
   setup_log "📄 Creating file authorized_keys"
   touch /root/.ssh/authorized_keys
@@ -208,7 +227,7 @@ fi
 
 wordwrap
 
-# adiciona bitbucket.org, gitlab.com, github.com
+# Adds bitbucket.org, gitlab.com, github.com
 setup_log "⚪ Adding bitbucket.org to trusted hosts"
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
@@ -310,13 +329,8 @@ done
 
 wordwrap
 
-if [[ ! -z $INSTALL_PROXY ]]; then
-
-  setup_log "Do you want to install the Reverse Proxy for docker containers?"
-  read -r -p "Type 'Y' to prepare the services or 'n' to skip:" INSTALL_PROXY
-  if [ $INSTALL_PROXY == "Y" ]; then
-      setup_proxy $BOILERPLATE
-  fi
+if $INSTALL_PROXY ; then
+    setup_proxy $BOILERPLATE
 fi
 
 wordwrap
