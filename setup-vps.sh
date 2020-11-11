@@ -10,6 +10,7 @@ BOILERPLATE_TRAEFIK_URL="https://github.com/fabioassuncao/docker-boilerplate-tra
 ORIGINAL_NAME_TRAEFIK=docker-boilerplate-traefik-proxy
 DIR_NAME_TRAEFIK=traefik-proxy
 
+# Example values that will be replaced
 EXAMPLE_DOMAIN=domain.test
 EXAMPLE_EMAIL=email@domain.test
 
