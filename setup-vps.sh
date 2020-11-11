@@ -341,7 +341,7 @@ for WORKDIR in $WORKDIRS; do
 	mkdir -p $WORKDIR_FULL
 
 	setup_log "🔗 Creating symbolic link for ${WORKDIR_FULL}"
-	ln -s $WORKDIR_FULL /home/$DEPLOYER_USERNAME/$WORKDIR
+	ln -sfn $WORKDIR_FULL /home/$DEPLOYER_USERNAME/$WORKDIR
 
 done
 
