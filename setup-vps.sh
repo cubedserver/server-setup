@@ -125,7 +125,7 @@ function setup_proxy() {
     PROXY_FULL_PATH=${WORKDIR}/${DIR_NAME}
     
     setup_log "📥 Downloading boilerplate ${BOILERPLATE}"
-    wget $BOILERPLATE_URL -O $FILE_ZIPED
+    wget -q $BOILERPLATE_URL -O $FILE_ZIPED
 
     setup_log "🗃️ Extracting files from ${FILE_ZIPED}"
     unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
