@@ -62,7 +62,7 @@ function setup_proxy {
 
     PROXY_FULL_PATH=${WORKDIR}/${DIR_NAME}
     
-    setup_log "☁️ Downloading boilerplate ${BOILERPLATE}..."
+    setup_log "📥 Downloading boilerplate ${BOILERPLATE}..."
     wget BOILERPLATE_URL -O $FILE_ZIPED
 
     setup_log "Extracting files from ${FILE_ZIPED}..."
@@ -91,10 +91,12 @@ greet
 setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_ENV_TEMPLATE
 if [ $USE_ENV_TEMPLATE == "Y" ]; then
-  setup_log "☁️ Downloading template ..."
+  setup_log "📥 Downloading template ..."
   curl -fsSL $ENV_TEMPLATE -o .env
   nano .env
 fi
+
+echo -e "\n"
 
 # If there is a env file, source it
 if [ -f "./.env" ]; then
@@ -159,8 +161,12 @@ echo -e "\n"
 setup_log "⚪ Adding bitbucket.org to trusted hosts..."
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
+echo -e "\n"
+
 setup_log "⚪ Adding gitlab.com to trusted hosts..."
 ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
+
+echo -e "\n"
 
 setup_log "⚪ Adding github.com to trusted hosts..."
 ssh-keyscan github.com >> /root/.ssh/known_hosts
@@ -175,8 +181,6 @@ if [[ -z $DEPLOYER_USERNAME ]]; then
       exit 1
   fi
 fi
-
-echo -e "\n"
 
 if [[ -z $VENDOR_NAME ]]; then
   read -r -p "🏢 Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
@@ -245,17 +249,17 @@ for WORKDIR in $WORKDIRS; do
 
   WORKDIR_FULL=${ROOT_WORKDIR}/$VENDOR_NAME/$WORKDIR
 
-	setup_log "📂 Creating working directory ${WORKDIR_FULL}..."
+	setup_log "📂 Creating working directory ${WORKDIR_FULL}"
 	mkdir -p $WORKDIR_FULL
 
-	setup_log "🔗 Creating symbolic link for ${WORKDIR_FULL}..."
+	setup_log "🔗 Creating symbolic link for ${WORKDIR_FULL}"
 	ln -s $WORKDIR_FULL /home/$DEPLOYER_USERNAME/$WORKDIR
 
 done
 
 echo -e "\n"
 
-if [[ -z $INSTALL_PROXY ]]; then
+if [[ ! -z $INSTALL_PROXY ]]; then
 
   setup_log "Do you want to install the Reverse Proxy for docker containers?"
   read -r -p "Type 'Y' to prepare the services or 'n' to skip:" INSTALL_PROXY
