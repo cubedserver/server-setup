@@ -202,6 +202,32 @@ setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -qq >/dev/null
 timedatectl set-timezone $TIMEZONE
 
+
+setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
+apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl
+
+wordwrap
+
+if [ -x "$(command -v docker)" ]; then
+    setup_log "🐳 Docker previously installed! Resetting containers, images and networks."
+    docker_reset
+else
+    setup_log "🐳 Installing docker"
+    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+fi
+
+wordwrap
+
+if [ ! -f /usr/local/bin/docker-compose ]; then
+  setup_log "📦 Installing docker-compose"
+  curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
+  chmod +x /usr/local/bin/docker-compose
+
+  wordwrap
+else
+    setup_log "📦 Docker-compose previously installed! Skipping..."
+fi
+
 wordwrap
 
 # Set root password
@@ -268,63 +294,46 @@ fi
 
 wordwrap
 
-# adiciona usuário padrão
-setup_log "👤 Creating standard user"
-useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
+# Adds standard user, if one does not exist.
+if [ `sed -n "/^$DEPLOYER_USERNAME/p" /etc/passwd` ]; then
 
-if [[ -z $DEPLOYER_PASSWORD ]]; then
-  passwd $DEPLOYER_USERNAME
+    setup_log "👤User $DEPLOYER_USERNAME already exists. Skipping..."
+
 else
-  echo $DEPLOYER_PASSWORD | passwd $DEPLOYER_USERNAME > /dev/null 2>&1
+    setup_log "👤 Creating standard user"
+    useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
+
+    if [[ -z $DEPLOYER_PASSWORD ]]; then
+      passwd $DEPLOYER_USERNAME
+    else
+      echo $DEPLOYER_PASSWORD | passwd $DEPLOYER_USERNAME > /dev/null 2>&1
+    fi
+
+    wordwrap
+
+    # copia SSH authorized_keys
+    setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
+    if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
+      mkdir /home/$DEPLOYER_USERNAME/.ssh
+    fi
+    cp -r /root/.ssh/* /home/$DEPLOYER_USERNAME/.ssh/
+    chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
+
+    wordwrap
+
+    # add standard user to sudoers
+    setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges"
+    echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
+    chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
+
+    wordwrap
+
+    setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
+    usermod -aG www-data $DEPLOYER_USERNAME
+
+    setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group"
+    usermod -aG docker $DEPLOYER_USERNAME
 fi
-
-wordwrap
-
-# copia SSH authorized_keys
-setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
-if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
-  mkdir /home/$DEPLOYER_USERNAME/.ssh
-fi
-cp -r /root/.ssh/* /home/$DEPLOYER_USERNAME/.ssh/
-chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
-
-wordwrap
-
-# add standard user to sudoers
-setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges"
-echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
-chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
-
-wordwrap
-
-setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
-apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl
-
-wordwrap
-
-if [ -x "$(command -v docker)" ]; then
-    setup_log "🐳 Docker previously installed! Resetting containers, images and networks."
-    docker_reset
-else
-    setup_log "🐳 Installing docker"
-    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
-fi
-
-wordwrap
-
-if [ ! -f /usr/local/bin/docker-compose ]; then
-  setup_log "📦 Installing docker-compose"
-  curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
-  chmod +x /usr/local/bin/docker-compose
-
-  wordwrap
-fi
-
-setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
-usermod -aG www-data $DEPLOYER_USERNAME
-
-setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group"
-usermod -aG docker $DEPLOYER_USERNAME
 
 wordwrap
 
