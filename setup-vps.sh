@@ -37,7 +37,7 @@ fi
 function greet() {
     # Welcome users
     echo -e "\n\e[32m******************************************\e[39m"
-    echo -e "\e[32m**           Basic Host Setup           **\e[39m"
+    echo -e "\e[32m**      👩🏻‍💻👨🏻‍💻 Basic Host Setup       **\e[39m"
     echo -e "\e[32m******************************************\e[39m\n\n"
 }
 
