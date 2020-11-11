@@ -77,12 +77,12 @@ function setup_proxy {
     unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
 
     if [[ ! -z $YOUR_EMAIL ]]; then
-        setup_log "📧 Overriding test email from configuration files"
+        setup_log "📧 Overriding ${EXAMPLE_EMAIL} to ${YOUR_EMAIL} email from configuration files"
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_EMAIL/$YOUR_EMAIL/g" {} \;
     fi
 
     if [[ ! -z $YOUR_DOMAIN ]]; then
-        setup_log "🌐 Overriding test domain for configuration files"
+        setup_log "🌐 Overriding ${EXAMPLE_DOMAIN} to ${YOUR_DOMAIN} domain for configuration files"
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
     fi
 
