@@ -294,7 +294,7 @@ chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
 wordwrap
 
 setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
-apt-get install -y git zip unzip curl wget acl
+apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl
 
 wordwrap
 
@@ -329,6 +329,7 @@ for WORKDIR in $WORKDIRS; do
   WORKDIR_FULL=${ROOT_WORKDIR}/$VENDOR_NAME/$WORKDIR
 
   if [ -d $WORKDIR_FULL ]; then
+      setup_log "🗑️ Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
       rm -rf $WORKDIR_FULL
   fi
 
