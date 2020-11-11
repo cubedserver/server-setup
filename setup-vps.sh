@@ -17,10 +17,6 @@ if [[ -z $SHOW_LOGS ]]; then
     SHOW_LOGS=true
 fi
 
-if [[ -z $INSTALL_PROXY ]]; then
-    INSTALL_PROXY=true
-fi
-
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
     DOCKER_COMPOSE_VERSION="1.27.4"
 fi
@@ -29,20 +25,26 @@ if [[ -z $WORKDIRS ]]; then
     WORKDIRS="apps backups"
 fi
 
-if [[ -z $DOCKER_NETWORKS ]]; then
-    DOCKER_NETWORKS="web internal"
-fi
-
 if [[ -z $ROOT_WORKDIR ]]; then
     ROOT_WORKDIR="/var"
+fi
+
+if [[ -z $TIMEZONE ]]; then
+    TIMEZONE=America/Sao_Paulo
+fi
+
+# Reverse proxy configuration variables
+
+if [[ -z $INSTALL_PROXY ]]; then
+    INSTALL_PROXY=false
 fi
 
 if [[ -z $BOILERPLATE ]]; then
     BOILERPLATE=nginx
 fi
 
-if [[ -z $TIMEZONE ]]; then
-    TIMEZONE=America/Sao_Paulo
+if [[ -z $DOCKER_NETWORKS ]]; then
+    DOCKER_NETWORKS="web internal"
 fi
 
 # greet
