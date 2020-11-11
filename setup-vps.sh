@@ -6,6 +6,11 @@ if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
   DOCKER_COMPOSE_VERSION="1.27.4"
 fi
 
+# Outputs install log line
+function setup_log() {
+    echo -e "\033[1;32m$*\033[m"
+}
+
 setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_TEMPLATE
 if [ $USE_TEMPLATE == "Y" ]; then
@@ -18,12 +23,6 @@ fi
 if [ -f "./.env" ]; then
    source ./.env
 fi
-
-
-# Outputs install log line
-function setup_log() {
-    echo -e "\033[1;32m$*\033[m"
-}
 
 if [ "$(id -u)" != "0" ]; then
    setup_log "❌ Sorry! This script must be run as root." 1>&2

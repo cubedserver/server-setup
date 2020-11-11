@@ -1,6 +1,10 @@
 # Basic Host Setup
 
-Super basic script for lazy devs to do initial server configurations on DigitalOcean, Linone, AWS EC2 or similar.
+<div align="center">
+  <img src="assets/cover.svg" loading="lazy" />
+</div>
+
+Super basic script for lazy devs to do the initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on local or remote servers on DigitalOcean, Linone, AWS EC2 or similar.
 
 Performs the following configuration steps:
 
