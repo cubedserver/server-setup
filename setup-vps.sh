@@ -57,31 +57,37 @@ function setup_proxy {
     FILE_ZIPED=${ORIGINAL_NAME}.zip
     WORKDIR=/var/${VENDOR_NAME}/apps/core
     
-    setup_log "📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy..."
+    setup_log "📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
     mkdir -p $WORKDIR
 
     PROXY_FULL_PATH=${WORKDIR}/${DIR_NAME}
     
-    setup_log "📥 Downloading boilerplate ${BOILERPLATE}..."
-    wget BOILERPLATE_URL -O $FILE_ZIPED
+    setup_log "📥 Downloading boilerplate ${BOILERPLATE}"
+    wget $BOILERPLATE_URL -O $FILE_ZIPED
 
-    setup_log "🗃️ Extracting files from ${FILE_ZIPED}..."
+    setup_log "🗃️ Extracting files from ${FILE_ZIPED}"
     unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
 
     if [[ ! -z $YOUR_EMAIL ]]; then
-        setup_log "📧 Overriding test email from configuration files..."
+        setup_log "📧 Overriding test email from configuration files"
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_EMAIL/$YOUR_EMAIL/g" {} \;
     fi
 
     if [[ ! -z $YOUR_DOMAIN ]]; then
-        setup_log "🌐 Overriding test domain for configuration files..."
+        setup_log "🌐 Overriding test domain for configuration files"
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
     fi
+
+    setup_log "⚡ Starting reverse proxy containers"
+    docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
 
     # Moves the app folder to the working directory root
     if [[ ! -z $ADDITIONAL_APPS ]]; then
         for APP in $ADDITIONAL_APPS; do
             mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
+
+            setup_log "⚡ Starting ${APP} container"
+            docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d
         done    
     fi
 }
@@ -91,7 +97,7 @@ greet
 setup_log "🎲 Do you want to use a file of environment variables to go faster?"
 read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_ENV_TEMPLATE
 if [ $USE_ENV_TEMPLATE == "Y" ]; then
-  setup_log "📥 Downloading template ..."
+  setup_log "📥 Downloading template"
   curl -fsSL $ENV_TEMPLATE -o .env
   nano .env
 fi
@@ -117,7 +123,7 @@ if [ "$GO" != "Y" ]; then
 fi
 
 # define timezone
-setup_log "🕒 Updating packages and setting the timezone..."
+setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -y
 
 if [[ -z $TIMEZONE ]]; then
@@ -129,7 +135,7 @@ fi
 echo -e "\n"
 
 # define senha root
-setup_log "🔑 Setting the root password..."
+setup_log "🔑 Setting the root password"
 
 if [[ -z $ROOT_PASSWORD ]]; then
   passwd
@@ -139,36 +145,36 @@ fi
 
 # cria chave SSH do root caso não exista
 if [ ! -e /root/.ssh/id_rsa ]; then
-   setup_log "🔑 Creating SSH Keys..."
+   setup_log "🔑 Creating SSH Keys"
    ssh-keygen -t rsa
 fi
 
 # criar arquivo known_hosts caso não exista
 if [ ! -e /root/.ssh/known_hosts ]; then
-   setup_log "📄 Creating file known_hosts..."
+   setup_log "📄 Creating file known_hosts"
    touch /root/.ssh/known_hosts
 fi
 
 # criar arquivo authorized_keys caso não exista
 if [ ! -e /root/.ssh/authorized_keys ]; then
-  setup_log "📄 Creating file authorized_keys..."
+  setup_log "📄 Creating file authorized_keys"
   touch /root/.ssh/authorized_keys
 fi
 
 echo -e "\n"
 
 # adiciona bitbucket.org, gitlab.com, github.com
-setup_log "⚪ Adding bitbucket.org to trusted hosts..."
+setup_log "⚪ Adding bitbucket.org to trusted hosts"
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
 echo -e "\n"
 
-setup_log "⚪ Adding gitlab.com to trusted hosts..."
+setup_log "⚪ Adding gitlab.com to trusted hosts"
 ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 
 echo -e "\n"
 
-setup_log "⚪ Adding github.com to trusted hosts..."
+setup_log "⚪ Adding github.com to trusted hosts"
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 echo -e "\n"
@@ -193,7 +199,7 @@ fi
 echo -e "\n"
 
 # adiciona usuário padrão
-setup_log "👤 Creating standard user..."
+setup_log "👤 Creating standard user"
 useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
 
 if [[ -z $DEPLOYER_PASSWORD ]]; then
@@ -205,7 +211,7 @@ fi
 echo -e "\n"
 
 # copia SSH authorized_keys
-setup_log "🗂️ Copying the SSH public key to the home directory of the new default user..."
+setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
 if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
   mkdir /home/$DEPLOYER_USERNAME/.ssh
 fi
@@ -215,7 +221,7 @@ chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
 echo -e "\n"
 
 # add standard user to sudoers
-setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges..."
+setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges"
 echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
 chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
 
@@ -226,21 +232,21 @@ apt-get install -y git zip unzip curl wget acl
 
 echo -e "\n"
 
-setup_log "🐳 Installing docker..."
+setup_log "🐳 Installing docker"
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 
 echo -e "\n"
 
-setup_log "📦 Installing docker-compose..."
+setup_log "📦 Installing docker-compose"
 curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
 echo -e "\n"
 
-setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data..."
+setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
 usermod -aG www-data $DEPLOYER_USERNAME
 
-setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group..."
+setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group"
 usermod -aG docker $DEPLOYER_USERNAME
 
 echo -e "\n"
@@ -270,12 +276,12 @@ fi
 
 echo -e "\n"
 
-setup_log "🔁 Changing owner of the root working directory to $DEPLOYER_USERNAME..."
+setup_log "🔁 Changing owner of the root working directory to $DEPLOYER_USERNAME"
 chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME ${ROOT_WORKDIR}/$VENDOR_NAME
 
 echo -e "\n"
 
-setup_log "🧹 Cleaning up..."
+setup_log "🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
