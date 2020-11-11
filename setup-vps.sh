@@ -115,8 +115,8 @@ function setup_proxy() {
     WORKDIR=/var/${VENDOR_NAME}/apps/core
 
     if [ -d $WORKDIR ]; then
-      setup_log "🗑️  Deleting previous files from an unsuccessful previous attempt"
-      rm -rf $WORKDIR
+        setup_log "🗑️  Deleting previous files from an unsuccessful previous attempt"
+        rm -rf $WORKDIR
     fi
 
     setup_log "📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
@@ -127,41 +127,49 @@ function setup_proxy() {
     setup_log "📥 Downloading boilerplate ${BOILERPLATE}"
     wget -q $BOILERPLATE_URL -O $FILE_ZIPED
 
-    setup_log "🗃️ Extracting files from ${FILE_ZIPED}"
-    unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
+    if [ ! -f $FILE_ZIPED ]; then
+        setup_log "❌ Failed to download proxy files. Skipping..."
+    else
+        setup_log "🗃️ Extracting files from ${FILE_ZIPED}"
+        unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
 
-    if [[ ! -z $YOUR_EMAIL ]]; then
-        setup_log "📧 Overriding ${EXAMPLE_EMAIL} to ${YOUR_EMAIL} email from configuration files"
-        find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_EMAIL/$YOUR_EMAIL/g" {} \;
+        if [[ ! -z $YOUR_EMAIL ]]; then
+            setup_log "📧 Overriding ${EXAMPLE_EMAIL} to ${YOUR_EMAIL} email from configuration files"
+            find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_EMAIL/$YOUR_EMAIL/g" {} \;
+        fi
+
+        if [[ ! -z $YOUR_DOMAIN ]]; then
+            setup_log "🌐 Overriding ${EXAMPLE_DOMAIN} to ${YOUR_DOMAIN} domain for configuration files"
+            find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
+        fi
+
+        for NETWORK_NAME in $DOCKER_NETWORKS; do
+            create_docker_network $NETWORK_NAME
+        done 
+
+        setup_log "⚡ Starting reverse proxy containers"
+        docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
+
+        install_report "Services started"
+        install_report "--------------------------------------------------------------------------------"
+        install_report "${PROXY_FULL_PATH}/docker-compose.yml"
+
+        # Moves the app folder to the working directory root
+        if [[ ! -z $ADDITIONAL_APPS ]]; then
+            for APP in $ADDITIONAL_APPS; do
+                if [ -d ${PROXY_FULL_PATH}/examples/${APP} ]; then
+                    mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
+
+                    setup_log "⚡ Starting ${APP} container"
+                    docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d
+                    install_report "${WORKDIR}/${APP}/docker-compose.yml"
+                else
+                    setup_log "❌ App ${APP} files not found. Skipping..."
+                fi
+            done    
+        fi
     fi
 
-    if [[ ! -z $YOUR_DOMAIN ]]; then
-        setup_log "🌐 Overriding ${EXAMPLE_DOMAIN} to ${YOUR_DOMAIN} domain for configuration files"
-        find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
-    fi
-
-    for NETWORK_NAME in $DOCKER_NETWORKS; do
-        create_docker_network $NETWORK_NAME
-    done 
-
-    setup_log "⚡ Starting reverse proxy containers"
-    docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
-
-    install_report "Services started"
-    install_report "--------------------------------------------------------------------------------"
-    install_report "${PROXY_FULL_PATH}/docker-compose.yml"
-
-
-    # Moves the app folder to the working directory root
-    if [[ ! -z $ADDITIONAL_APPS ]]; then
-        for APP in $ADDITIONAL_APPS; do
-            mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
-
-            setup_log "⚡ Starting ${APP} container"
-            docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d
-            install_report "${WORKDIR}/${APP}/docker-compose.yml"
-        done    
-    fi
 }
 
 install_report "--------------------------------------------------------------------------------"
@@ -298,7 +306,7 @@ wordwrap
 # Adds standard user, if one does not exist.
 if [ `sed -n "/^$DEPLOYER_USERNAME/p" /etc/passwd` ]; then
 
-    setup_log "👤User $DEPLOYER_USERNAME already exists. Skipping..."
+    setup_log "👤 User $DEPLOYER_USERNAME already exists. Skipping..."
 
 else
     setup_log "👤 Creating standard user"
