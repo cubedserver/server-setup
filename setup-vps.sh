@@ -275,7 +275,7 @@ ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 wordwrap
 
-# pedir nome de usuário do novo usuário padrão
+# Request username for new default user
 if [[ -z $DEPLOYER_USERNAME ]]; then
   read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer): " DEPLOYER_USERNAME
   if [ -z $DEPLOYER_USERNAME ]; then
@@ -311,7 +311,7 @@ else
 
     wordwrap
 
-    # copia SSH authorized_keys
+    # Copy SSH authorized_keys
     setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
     if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
       mkdir /home/$DEPLOYER_USERNAME/.ssh
