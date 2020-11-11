@@ -85,9 +85,9 @@ function create_docker_network() {
 # Remove images and containers from a previous unsuccessful attempt
 function docker_reset() {
   CONTAINERS=$(docker container ls -aq)
-  docker container stop $CONTAINERS
-  docker container rm $CONTAINERS
-  docker image prune --force
+  docker container stop $CONTAINERS 2>&1 >/dev/null
+  docker container rm $CONTAINERS 2>&1 >/dev/null
+  docker image prune --force 2>&1 >/dev/null
 }
 
 function setup_proxy() {
