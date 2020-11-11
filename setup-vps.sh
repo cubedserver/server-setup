@@ -65,7 +65,7 @@ function setup_proxy {
     setup_log "📥 Downloading boilerplate ${BOILERPLATE}..."
     wget BOILERPLATE_URL -O $FILE_ZIPED
 
-    setup_log "Extracting files from ${FILE_ZIPED}..."
+    setup_log "🗃️ Extracting files from ${FILE_ZIPED}..."
     unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
 
     if [[ ! -z $YOUR_EMAIL ]]; then
