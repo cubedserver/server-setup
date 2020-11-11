@@ -249,18 +249,18 @@ wordwrap
 
 # pedir nome de usuário do novo usuário padrão
 if [[ -z $DEPLOYER_USERNAME ]]; then
-  read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer):" DEPLOYER_USERNAME
+  read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer): " DEPLOYER_USERNAME
   if [ -z $DEPLOYER_USERNAME ]; then
-      echo "❌ No user name entered, aborting." 1>&2
-      exit 1
+      DEPLOYER_USERNAME=deployer
+      setup_log "ℹ️ Using default value ${DEPLOYER_USERNAME}"
   fi
 fi
 
 if [[ -z $VENDOR_NAME ]]; then
   read -r -p "🏢 Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
   if [[ -z $VENDOR_NAME ]]; then
-      echo "❌ No default folder name entered, aborting." 1>&2
-      exit 1
+      VENDOR_NAME=projects
+      setup_log "ℹ️ Using default value ${VENDOR_NAME}"
   fi
 fi
 
