@@ -29,6 +29,10 @@ if [[ -z $BOILERPLATE ]]; then
     BOILERPLATE=nginx
 fi
 
+if [[ -z $TIMEZONE ]]; then
+    TIMEZONE=America/Sao_Paulo
+fi
+
 # greet
 function greet() {
     # Welcome users
@@ -40,6 +44,10 @@ function greet() {
 # Outputs install log line
 function setup_log() {
     echo -e "\033[1;32m$*\033[m"
+}
+
+function install_report() {
+    echo $* >> install-report.txt
 }
 
 function setup_proxy {
@@ -80,6 +88,9 @@ function setup_proxy {
 
     setup_log "⚡ Starting reverse proxy containers"
     docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
+    install_report "\n\nServices started\n"
+    install_report "${PROXY_FULL_PATH}/docker-compose.yml"
+
 
     # Moves the app folder to the working directory root
     if [[ ! -z $ADDITIONAL_APPS ]]; then
@@ -88,9 +99,12 @@ function setup_proxy {
 
             setup_log "⚡ Starting ${APP} container"
             docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d
+            install_report "${WORKDIR}/${APP}/docker-compose.yml"
         done    
     fi
 }
+
+install_report "Started in: $(TZ=$TIMEZONE date)"
 
 greet
 
@@ -125,12 +139,7 @@ fi
 # define timezone
 setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -y
-
-if [[ -z $TIMEZONE ]]; then
-  dpkg-reconfigure tzdata
-else
-  timedatectl set-timezone $TIMEZONE
-fi
+timedatectl set-timezone $TIMEZONE
 
 echo -e "\n"
 
@@ -285,5 +294,8 @@ setup_log "🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
+install_report "Finished on: $(TZ=$TIMEZONE date)"
+
 # Finish
 setup_log "✅ Concluded! Please restart the server to apply some changes."
+echo -e "\n"
