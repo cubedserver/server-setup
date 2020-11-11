@@ -109,8 +109,6 @@ function setup_proxy() {
     FILE_ZIPED=${ORIGINAL_NAME}.zip
     WORKDIR=/var/${VENDOR_NAME}/apps/core
 
-    docker_reset
-
     if [ -d $WORKDIR ]; then
       setup_log "🗑️ Deleting previous files from an unsuccessful previous attempt"
       rm -rf $WORKDIR
@@ -195,7 +193,7 @@ fi
 
 # Update timezone
 setup_log "🕒 Updating packages and setting the timezone"
-apt-get update -y
+apt-get update -qq >/dev/null
 timedatectl set-timezone $TIMEZONE
 
 wordwrap
@@ -298,16 +296,23 @@ apt-get install -y git zip unzip curl wget acl
 
 wordwrap
 
-setup_log "🐳 Installing docker"
-curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+if [ -x "$(command -v docker)" ]; then
+    setup_log "🐳 Docker previously installed! Resetting containers, images and networks."
+    docker_reset
+else
+    setup_log "🐳 Installing docker"
+    curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+fi
 
 wordwrap
 
-setup_log "📦 Installing docker-compose"
-curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
-chmod +x /usr/local/bin/docker-compose
+if [ ! -f /usr/local/bin/docker-compose ]; then
+  setup_log "📦 Installing docker-compose"
+  curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
+  chmod +x /usr/local/bin/docker-compose
 
-wordwrap
+  wordwrap
+fi
 
 setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
 usermod -aG www-data $DEPLOYER_USERNAME
@@ -320,6 +325,10 @@ wordwrap
 for WORKDIR in $WORKDIRS; do
 
   WORKDIR_FULL=${ROOT_WORKDIR}/$VENDOR_NAME/$WORKDIR
+
+  if [ -d $WORKDIR_FULL ]; then
+      rm -rf $WORKDIR_FULL
+  fi
 
 	setup_log "📂 Creating working directory ${WORKDIR_FULL}"
 	mkdir -p $WORKDIR_FULL
