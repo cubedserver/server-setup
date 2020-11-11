@@ -13,12 +13,20 @@ DIR_NAME_TRAEFIK=traefik-proxy
 EXAMPLE_DOMAIN=domain.test
 EXAMPLE_EMAIL=email@domain.test
 
+if [[ -z $SHOW_LOGS ]]; then
+    SHOW_LOGS=true
+fi
+
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
-  DOCKER_COMPOSE_VERSION="1.27.4"
+    DOCKER_COMPOSE_VERSION="1.27.4"
 fi
 
 if [[ -z $WORKDIRS ]]; then
     WORKDIRS="apps backups"
+fi
+
+if [[ -z $DOCKER_NETWORKS ]]; then
+    DOCKER_NETWORKS="web internal"
 fi
 
 if [[ -z $ROOT_WORKDIR ]]; then
@@ -36,21 +44,43 @@ fi
 # greet
 function greet() {
     # Welcome users
-    echo -e "\n\e[32m******************************************\e[39m"
-    echo -e "\e[32m**      👩🏻‍💻👨🏻‍💻 Basic Host Setup       **\e[39m"
-    echo -e "\e[32m******************************************\e[39m\n\n"
+    if $SHOW_LOGS ; then
+      echo -e "\e[32m  ____            _        _   _           _     ____       _                \e[39m"
+      echo -e "\e[32m | __ )  __ _ ___(_) ___  | | | | ___  ___| |_  / ___|  ___| |_ _   _ _ __   \e[39m"
+      echo -e "\e[32m |  _ \ / _\` / __| |/ __| | |_| |/ _ \/ __| __| \___ \ / _ \ __| | | | '_ \  \e[39m"
+      echo -e "\e[32m | |_) | (_| \__ \ | (__  |  _  | (_) \__ \ |_   ___) |  __/ |_| |_| | |_) | \e[39m"
+      echo -e "\e[32m |____/ \__,_|___/_|\___| |_| |_|\___/|___/\__| |____/ \___|\__|\__,_| .__/  \e[39m"
+      echo -e "\e[32m                                                                     |_|     \e[39m\n\n"
+    fi
 }
+
 
 # Outputs install log line
 function setup_log() {
-    echo -e "\033[1;32m$*\033[m"
+  if $SHOW_LOGS ; then
+      echo -e "\033[1;32m$*\033[m"
+  fi
+}
+
+function wordwrap() {
+  if $SHOW_LOGS ; then
+    echo -e "\n"
+  fi
 }
 
 function install_report() {
     echo $* >> install-report.txt
 }
 
-function setup_proxy {
+function create_docker_network() {
+    NETWORK_NAME=$1
+    setup_log "⚡ Creating Docker network ${NETWORK_NAME}"
+    docker network ls|grep $NETWORK_NAME > /dev/null || docker network create $NETWORK_NAME
+}
+
+function setup_proxy() {
+
+  BOILERPLATE=$1
 
   if [ $BOILERPLATE == "nginx" ]; then
       BOILERPLATE_URL=$BOILERPLATE_NGINX_URL
@@ -86,11 +116,9 @@ function setup_proxy {
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
     fi
 
-    setup_log "⚡ Creating a new Docker network called web"
-    docker network ls|grep web > /dev/null || docker network create --driver bridge web
-    
-    setup_log "⚡ Creating a new Docker network called internal"
-    docker network ls|grep internal > /dev/null || docker network create --driver bridge internal
+    for NETWORK_NAME in $DOCKER_NETWORKS; do
+        create_docker_network $NETWORK_NAME
+    done 
 
     setup_log "⚡ Starting reverse proxy containers"
     docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
@@ -149,7 +177,7 @@ setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -y
 timedatectl set-timezone $TIMEZONE
 
-echo -e "\n"
+wordwrap
 
 # define senha root
 setup_log "🔑 Setting the root password"
@@ -178,23 +206,23 @@ if [ ! -e /root/.ssh/authorized_keys ]; then
   touch /root/.ssh/authorized_keys
 fi
 
-echo -e "\n"
+wordwrap
 
 # adiciona bitbucket.org, gitlab.com, github.com
 setup_log "⚪ Adding bitbucket.org to trusted hosts"
 ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
 
-echo -e "\n"
+wordwrap
 
 setup_log "⚪ Adding gitlab.com to trusted hosts"
 ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
 
-echo -e "\n"
+wordwrap
 
 setup_log "⚪ Adding github.com to trusted hosts"
 ssh-keyscan github.com >> /root/.ssh/known_hosts
 
-echo -e "\n"
+wordwrap
 
 # pedir nome de usuário do novo usuário padrão
 if [[ -z $DEPLOYER_USERNAME ]]; then
@@ -213,7 +241,7 @@ if [[ -z $VENDOR_NAME ]]; then
   fi
 fi
 
-echo -e "\n"
+wordwrap
 
 # adiciona usuário padrão
 setup_log "👤 Creating standard user"
@@ -225,7 +253,7 @@ else
   echo $DEPLOYER_PASSWORD | passwd $DEPLOYER_USERNAME > /dev/null 2>&1
 fi
 
-echo -e "\n"
+wordwrap
 
 # copia SSH authorized_keys
 setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
@@ -235,30 +263,30 @@ fi
 cp -r /root/.ssh/* /home/$DEPLOYER_USERNAME/.ssh/
 chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
 
-echo -e "\n"
+wordwrap
 
 # add standard user to sudoers
 setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges"
 echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
 chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
 
-echo -e "\n"
+wordwrap
 
 setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
 apt-get install -y git zip unzip curl wget acl
 
-echo -e "\n"
+wordwrap
 
 setup_log "🐳 Installing docker"
 curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 
-echo -e "\n"
+wordwrap
 
 setup_log "📦 Installing docker-compose"
 curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
 chmod +x /usr/local/bin/docker-compose
 
-echo -e "\n"
+wordwrap
 
 setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
 usermod -aG www-data $DEPLOYER_USERNAME
@@ -266,7 +294,7 @@ usermod -aG www-data $DEPLOYER_USERNAME
 setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group"
 usermod -aG docker $DEPLOYER_USERNAME
 
-echo -e "\n"
+wordwrap
 
 for WORKDIR in $WORKDIRS; do
 
@@ -280,23 +308,23 @@ for WORKDIR in $WORKDIRS; do
 
 done
 
-echo -e "\n"
+wordwrap
 
 if [[ ! -z $INSTALL_PROXY ]]; then
 
   setup_log "Do you want to install the Reverse Proxy for docker containers?"
   read -r -p "Type 'Y' to prepare the services or 'n' to skip:" INSTALL_PROXY
   if [ $INSTALL_PROXY == "Y" ]; then
-      setup_proxy
+      setup_proxy $BOILERPLATE
   fi
 fi
 
-echo -e "\n"
+wordwrap
 
 setup_log "🔁 Changing owner of the root working directory to $DEPLOYER_USERNAME"
 chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME ${ROOT_WORKDIR}/$VENDOR_NAME
 
-echo -e "\n"
+wordwrap
 
 setup_log "🧹 Cleaning up"
 apt-get autoremove -y
@@ -308,5 +336,5 @@ install_report "----------------------------------------------------------------
 
 # Finish
 setup_log "✅ Concluded! Please restart the server to apply some changes."
-echo -e "\n"
+wordwrap
 cat install-report.txt
