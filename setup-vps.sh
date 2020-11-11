@@ -112,6 +112,7 @@ function setup_proxy {
     fi
 }
 
+install_report "--------------------------------------------------------------------------------"
 install_report "Started in: $(TZ=$TIMEZONE date)"
 install_report "--------------------------------------------------------------------------------"
 
@@ -303,6 +304,7 @@ apt-get clean -y
 
 install_report "--------------------------------------------------------------------------------"
 install_report "Finished on: $(TZ=$TIMEZONE date)"
+install_report "--------------------------------------------------------------------------------"
 
 # Finish
 setup_log "✅ Concluded! Please restart the server to apply some changes."
