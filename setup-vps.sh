@@ -192,13 +192,15 @@ if [ "${GO:=Y}" != "Y" ]; then
     exit 1
 fi
 
-setup_log "🎲 Do you want to use a file of environment variables to go faster?"
-read -r -p "Type 'Y' to download and edit the file or 'n' to skip (default Y): " USE_ENV_TEMPLATE
+if [ ! -f "./.env" ]; then
+  setup_log "🎲 Do you want to use a file of environment variables to go faster?"
+  read -r -p "Type 'Y' to download and edit the file or 'n' to skip (default Y): " USE_ENV_TEMPLATE
 
-if [ "${USE_ENV_TEMPLATE:=Y}" == "Y" ]; then
-  setup_log "📥 Downloading template"
-  curl -fsSL $ENV_TEMPLATE -o .env
-  nano .env
+  if [ "${USE_ENV_TEMPLATE:=Y}" == "Y" ]; then
+    setup_log "📥 Downloading template"
+    curl -fsSL $ENV_TEMPLATE -o .env
+    nano .env
+  fi
 fi
 
 # If there is a env file, source it
@@ -210,7 +212,6 @@ fi
 setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -qq >/dev/null
 timedatectl set-timezone $TIMEZONE
-
 
 setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
 apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl
