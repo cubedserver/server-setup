@@ -86,9 +86,17 @@ function setup_proxy {
         find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
     fi
 
+    setup_log "⚡ Creating a new Docker network called web"
+    docker network ls|grep web > /dev/null || docker network create --driver bridge web
+    
+    setup_log "⚡ Creating a new Docker network called internal"
+    docker network ls|grep internal > /dev/null || docker network create --driver bridge internal
+
     setup_log "⚡ Starting reverse proxy containers"
     docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
-    install_report "\n\nServices started\n"
+
+    install_report "Services started"
+    install_report "--------------------------------------------------------------------------------"
     install_report "${PROXY_FULL_PATH}/docker-compose.yml"
 
 
@@ -105,23 +113,9 @@ function setup_proxy {
 }
 
 install_report "Started in: $(TZ=$TIMEZONE date)"
+install_report "--------------------------------------------------------------------------------"
 
 greet
-
-setup_log "🎲 Do you want to use a file of environment variables to go faster?"
-read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_ENV_TEMPLATE
-if [ $USE_ENV_TEMPLATE == "Y" ]; then
-  setup_log "📥 Downloading template"
-  curl -fsSL $ENV_TEMPLATE -o .env
-  nano .env
-fi
-
-echo -e "\n"
-
-# If there is a env file, source it
-if [ -f "./.env" ]; then
-   source ./.env
-fi
 
 if [ "$(id -u)" != "0" ]; then
    setup_log "❌ Sorry! This script must be run as root." 1>&2
@@ -134,6 +128,19 @@ read -r -p "Type 'Y' to continue or 'n' to cancel: " GO
 if [ "$GO" != "Y" ]; then
     setup_log "❌ Aborting." 1>&2
     exit 1
+fi
+
+setup_log "🎲 Do you want to use a file of environment variables to go faster?"
+read -r -p "Type 'Y' to download and edit the file or 'n' to skip: " USE_ENV_TEMPLATE
+if [ $USE_ENV_TEMPLATE == "Y" ]; then
+  setup_log "📥 Downloading template"
+  curl -fsSL $ENV_TEMPLATE -o .env
+  nano .env
+fi
+
+# If there is a env file, source it
+if [ -f "./.env" ]; then
+   source ./.env
 fi
 
 # define timezone
@@ -294,8 +301,10 @@ setup_log "🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
+install_report "--------------------------------------------------------------------------------"
 install_report "Finished on: $(TZ=$TIMEZONE date)"
 
 # Finish
 setup_log "✅ Concluded! Please restart the server to apply some changes."
 echo -e "\n"
+cat install-report.txt
