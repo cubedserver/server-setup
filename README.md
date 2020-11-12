@@ -18,10 +18,13 @@ Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in
 
 ## Installation
 
+To speed things up, you can create an `.env` file in the same path where you run the script. See the `.env.example` file with all environment variables available for configuration before installation.
+
+To do the setup, download and run the script `setup-vps.sh` or if you prefer (proceed at your own risk), execute the instruction below.
+
 ```
 curl -fsSL https://git.io/fpgbw -o setup-vps.sh && bash setup-vps.sh
 ```
-To speed things up, you can create an `.env` file in the same path where you run the script. See the `.env.example` file with all environment variables available for configuration before installation.
 
 ## Important
 In order for you to be able to deploy applications using git and some deployment tools such as the [deployer](https://deployer.org/), you will need to add the public key (id_rsa.pub) of the user created on your VCS server (bitbucket, gitlab, github, etc.).
