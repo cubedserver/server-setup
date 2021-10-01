@@ -19,7 +19,7 @@ if [[ -z $SHOW_LOGS ]]; then
 fi
 
 if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
-    DOCKER_COMPOSE_VERSION="1.27.4"
+    DOCKER_COMPOSE_VERSION="1.29.2"
 fi
 
 if [[ -z $WORKDIRS ]]; then
