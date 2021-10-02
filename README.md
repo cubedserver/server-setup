@@ -21,7 +21,7 @@ Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in
 To do the setup, download and run the script `setup-vps.sh` or if you prefer (proceed at your own risk), execute the instruction below.
 
 ```
-wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- \
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/setup-vps.sh | bash -s -- \
 --timezone America/Sao_Paulo \
 --root-password your_secure_password \
 --default-user cubed \
@@ -43,7 +43,7 @@ You can get help by passing the `-h` option.
 ~~~
 Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
 USAGE:
-    wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- [OPTIONS]
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/setup-vps.sh | bash -s -- [OPTIONS]
 OPTIONS:
 
 -t|--timezone               Standard system timezone
@@ -86,9 +86,9 @@ ssh-copy-id <USERNAME>@<SERVER IP>
 
 If you are looking for a boilerplate for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
 
- * [fabioassuncao/docker-boilerplate-traefik-proxy](https://github.com/fabioassuncao/docker-boilerplate-traefik-proxy)
+ * [cubedserver/docker-boilerplate-traefik-proxy](https://github.com/cubedserver/docker-boilerplate-traefik-proxy)
 
- * [fabioassuncao/docker-boilerplate-nginx-proxy](https://github.com/fabioassuncao/docker-boilerplate-nginx-proxy)
+ * [cubedserver/docker-boilerplate-nginx-proxy](https://github.com/cubedserver/docker-boilerplate-nginx-proxy)
 
 ## Contributing
 

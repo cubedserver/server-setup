@@ -1,12 +1,12 @@
 #!/bin/bash
 
 # nginx proxy files
-BOILERPLATE_NGINX_URL="https://github.com/fabioassuncao/docker-boilerplate-nginx-proxy/archive/master.zip"
+BOILERPLATE_NGINX_URL="https://github.com/cubedserver/docker-boilerplate-nginx-proxy/archive/master.zip"
 ORIGINAL_NAME_NGINX=docker-boilerplate-nginx-proxy
 DIR_NAME_NGINX=nginx-proxy
 
 # traefik proxy files
-BOILERPLATE_TRAEFIK_URL="https://github.com/fabioassuncao/docker-boilerplate-traefik-proxy/archive/master.zip"
+BOILERPLATE_TRAEFIK_URL="https://github.com/cubedserver/docker-boilerplate-traefik-proxy/archive/master.zip"
 ORIGINAL_NAME_TRAEFIK=docker-boilerplate-traefik-proxy
 DIR_NAME_TRAEFIK=traefik-proxy
 
@@ -45,7 +45,7 @@ usage() {
     cat 1>&2 <<HERE
 Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
 USAGE:
-    wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- [OPTIONS]
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/setup-vps.sh | bash -s -- [OPTIONS]
 OPTIONS:
 
 -t|--timezone               Standard system timezone
