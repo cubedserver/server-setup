@@ -45,7 +45,7 @@ usage() {
     cat 1>&2 <<HERE
 Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
 USAGE:
-    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/setup-vps.sh | bash -s -- [OPTIONS]
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
 OPTIONS:
 
 -t|--timezone               Standard system timezone
