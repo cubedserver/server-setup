@@ -4,7 +4,7 @@
   <img src="assets/cover.svg" loading="lazy" />
 </div>
 
-Super basic script for lazy devs to do the initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on local or remote servers on DigitalOcean, Linone, AWS EC2 or similar.
+Script to make initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on servers in Digital Ocean, Linone, AWS EC2 or similar.
 
 Performs the following configuration steps:
 
@@ -17,8 +17,6 @@ Performs the following configuration steps:
 Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in similar distributions.
 
 ## Installation
-
-To speed things up, you can create an `.env` file in the same path where you run the script. See the `.env.example` file with all environment variables available for configuration before installation.
 
 To do the setup, download and run the script `setup-vps.sh` or if you prefer (proceed at your own risk), execute the instruction below.
 
