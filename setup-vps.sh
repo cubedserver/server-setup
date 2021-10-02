@@ -31,7 +31,13 @@ ADDITIONAL_APPS=mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer
 YOUR_DOMAIN=yourdomain.com
 YOUR_EMAIL=email@yourdomain.com
 SSH_KEYSCAN='bitbucket.org,gitlab.com,github.com'
-SERVICES_PASSWORD=
+
+MYSQL_PASSWORD=
+POSTGRES_PASSWORD=
+REDIS_PASSWORD=
+TRAEFIK_PASSWORD=
+
+
 WEBHOOK_URL=
 
 usage() {
@@ -58,11 +64,20 @@ OPTIONS:
 --ssh-passphrase            Provides a passphrase for the ssh key
 
 OPTIONS (Service Credentials):
---services-password         New services password (MySQL, PostgreSQL, Redis)
+--mysql-password            MySQL root password
+--postgres-password         PostgreSQL password
+--redis-password            Redis password
+--traefik-password          Traefik admin password  
 
 OPTIONS (Webhook):
 --webhook-url               Ping URL With Provisioning Updates
 HERE
+}
+
+check_apache2() {
+  if dpkg -l | grep -q apache2-bin; then
+    error "You must uninstall the Apache2 server first";
+  fi
 }
 
 POSITIONAL=()
@@ -152,8 +167,27 @@ case $key in
         shift
         ;;
 
-    --services-password)
-        SERVICES_PASSWORD="$2"
+    --mysql-password)
+        MYSQL_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --postgres-password)
+        POSTGRES_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --redis-password)
+        REDIS_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --traefik-password)
+        TRAEFIK_PASSWORD=$(htpasswd -nb admin $2)
+
         shift
         shift
         ;;
@@ -198,6 +232,12 @@ function setup_log() {
       provision_ping "$1"
       echo -e "\033[1;32m${1}\033[m"
   fi
+}
+
+function error() {
+    provision_ping "$1"
+    echo "\033[0;31m${1}\033[m" >&2
+    exit 1
 }
 
 function wordwrap() {
@@ -273,10 +313,24 @@ function setup_proxy() {
         fi
 
         # Update service credentials
+        setup_log "🔑 Updating Service Credentials"
 
-        if [[ ! -z $SERVICES_PASSWORD ]]; then
-            setup_log "🔑 Updating service credentials"
-            find $PROXY_FULL_PATH -type f -exec sed -i "s/your_secure_password/$SERVICES_PASSWORD/g" {} \;
+        if [[ ! -z $MYSQL_PASSWORD ]]; then
+            find $PROXY_FULL_PATH/examples/mysql -type f -exec sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" {} \;
+        fi
+
+        if [[ ! -z $POSTGRES_PASSWORD ]]; then
+            find $PROXY_FULL_PATH/examples/postgres -type f -exec sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" {} \;
+        fi
+
+        if [[ ! -z $REDIS_PASSWORD ]]; then
+            find $PROXY_FULL_PATH/examples/redis -type f -exec sed -i "s/your_secure_password/$REDIS_PASSWORD/g" {} \;
+        fi
+
+        if [[ ! -z $TRAEFIK_PASSWORD ]]; then
+            OLD_TRAEFIK_PASSWORD="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
+
+            sed -i "s/$OLD_TRAEFIK_PASSWORD/$TRAEFIK_PASSWORD/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
         fi
 
         for NETWORK_NAME in $(echo $DOCKER_NETWORKS | sed "s/,/ /g"); do
@@ -310,9 +364,10 @@ function setup_proxy() {
 install_report "Started in: $(TZ=$TIMEZONE date)"
 
 if [ "$(id -u)" != "0" ]; then
-   setup_log "❌ Sorry! This script must be run as root." 1>&2
-   exit 1
+   error "❌ Sorry! This script must be run as root."
 fi
+
+check_apache2
 
 # Update timezone
 setup_log "🕒 Updating packages and setting the timezone"
@@ -320,7 +375,7 @@ apt-get update -qq >/dev/null
 timedatectl set-timezone $TIMEZONE
 
 setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
-apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl
+apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils
 
 wordwrap
 

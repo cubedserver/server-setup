@@ -62,7 +62,10 @@ OPTIONS:
 --ssh-passphrase            Provides a passphrase for the ssh key
 
 OPTIONS (Service Credentials):
---services-password         New services password (MySQL, PostgreSQL, Redis)
+--mysql-password            MySQL root password
+--postgres-password         PostgreSQL password
+--redis-password            Redis password
+--traefik-password          Traefik admin password  
 
 OPTIONS (Webhook):
 --webhook-url               Ping URL With Provisioning Updates
