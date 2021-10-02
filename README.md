@@ -1,7 +1,7 @@
 # Basic Host Setup
 
 <div align="center">
-  <img src="assets/cover.svg" loading="lazy" />
+  <img src="cover.svg" loading="lazy" />
 </div>
 
 Script to make initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on servers in Digital Ocean, Linone, AWS EC2 or similar.
