@@ -1,11 +1,11 @@
 #!/bin/bash
 
-ENV_TEMPLATE="https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/.env.example"
-
+# nginx proxy files
 BOILERPLATE_NGINX_URL="https://github.com/fabioassuncao/docker-boilerplate-nginx-proxy/archive/master.zip"
 ORIGINAL_NAME_NGINX=docker-boilerplate-nginx-proxy
 DIR_NAME_NGINX=nginx-proxy
 
+# traefik proxy files
 BOILERPLATE_TRAEFIK_URL="https://github.com/fabioassuncao/docker-boilerplate-traefik-proxy/archive/master.zip"
 ORIGINAL_NAME_TRAEFIK=docker-boilerplate-traefik-proxy
 DIR_NAME_TRAEFIK=traefik-proxy
@@ -14,60 +14,189 @@ DIR_NAME_TRAEFIK=traefik-proxy
 EXAMPLE_DOMAIN=domain.test
 EXAMPLE_EMAIL=email@domain.test
 
-if [[ -z $SHOW_LOGS ]]; then
-    SHOW_LOGS=true
-fi
+# Defaults
+INSTALL_PROXY=true
+SHOW_LOGS=true
+SSH_PASSPHRASE=
+TIMEZONE=America/Sao_Paulo
+DOCKER_COMPOSE_VERSION=1.29.2
+ROOT_PASSWORD=YourSecurePassword
+DEFAULT_USER=cubed
+DEFAULT_PASSWORD=YourSecurePassword
+ROOT_WORKDIR=/home/$DEFAULT_USER
+WORKDIRS=apps,backups
+DOCKER_NETWORKS=nginx-proxy,internal
+BOILERPLATE=nginx
+ADDITIONAL_APPS=mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer
+YOUR_DOMAIN=yourdomain.com
+YOUR_EMAIL=email@yourdomain.com
+SSH_KEYSCAN='bitbucket.org,gitlab.com,github.com'
+SERVICES_PASSWORD=
+WEBHOOK_URL=
 
-if [[ -z $DOCKER_COMPOSE_VERSION ]]; then
-    DOCKER_COMPOSE_VERSION="1.29.2"
-fi
+usage() {
+    set +x
+    cat 1>&2 <<HERE
+Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
+USAGE:
+    wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- [OPTIONS]
+OPTIONS:
 
-if [[ -z $WORKDIRS ]]; then
-    WORKDIRS="apps backups"
-fi
+-t|--timezone               Standard system timezone
+--docker-compose-version    Version of the docker compose to be installed
+--root-password             New root user password. The script forces the password update
+--default-user              Alternative user (with super powers) that will be used for deploys and remote access later
+--default-password
+--workdir                   Folder where all files of this setup will be stored
+--spaces                    Subfolders where applications will be allocated
+-n|--docker-networks        Docker networks to be created
+-b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
+-a|--additional-apps        Additional applications that will be installed along with the proxy
+-d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
+                            After everything is set up, you can access the services as follows: service.yourdomain.com
+-e|--email                  Email that Let's Encrypt will use to generate SSL certificates
+--ssh-passphrase            Provides a passphrase for the ssh key
 
-if [[ -z $ROOT_WORKDIR ]]; then
-    ROOT_WORKDIR="/var"
-fi
+OPTIONS (Service Credentials):
+--services-password         New services password (MySQL, PostgreSQL, Redis)
 
-if [[ -z $TIMEZONE ]]; then
-    TIMEZONE=America/Sao_Paulo
-fi
-
-# Reverse proxy configuration variables
-
-if [[ -z $INSTALL_PROXY ]]; then
-    INSTALL_PROXY=false
-fi
-
-if [[ -z $BOILERPLATE ]]; then
-    BOILERPLATE=nginx
-fi
-
-if [[ -z $DOCKER_NETWORKS ]]; then
-    DOCKER_NETWORKS="web internal"
-fi
-
-# greet
-function greet() {
-    # Welcome users
-    if $SHOW_LOGS ; then
-      echo -e "\n\n"
-      echo -e "\e[32m  ____            _        _   _           _     ____       _                \e[39m"
-      echo -e "\e[32m | __ )  __ _ ___(_) ___  | | | | ___  ___| |_  / ___|  ___| |_ _   _ _ __   \e[39m"
-      echo -e "\e[32m |  _ \ / _\` / __| |/ __| | |_| |/ _ \/ __| __| \___ \ / _ \ __| | | | '_ \  \e[39m"
-      echo -e "\e[32m | |_) | (_| \__ \ | (__  |  _  | (_) \__ \ |_   ___) |  __/ |_| |_| | |_) | \e[39m"
-      echo -e "\e[32m |____/ \__,_|___/_|\___| |_| |_|\___/|___/\__| |____/ \___|\__|\__,_| .__/  \e[39m"
-      echo -e "\e[32m                                                                     |_|     \e[39m"
-      echo -e "\n\n"
-    fi
+OPTIONS (Webhook):
+--webhook-url               Ping URL With Provisioning Updates
+HERE
 }
 
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+
+case $key in
+    -h|--help)
+        usage
+        exit 0
+        ;;
+    --ssh-passphrase)
+        SSH_PASSPHRASE="$2"
+        shift # past argument
+        shift # past value
+        ;;
+
+    -t|--timezone)
+        TIMEZONE="$2"
+        shift
+        shift
+        ;;
+
+    --docker-compose-version)
+        DOCKER_COMPOSE_VERSION="$2"
+        shift
+        shift
+        ;;
+
+    --root-password)
+        ROOT_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --default-user)
+        DEFAULT_USER="$2"
+        shift
+        shift
+        ;;
+    --default-password)
+        DEFAULT_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --workdir)
+        ROOT_WORKDIR="$2"
+        shift
+        shift
+        ;;
+
+    --spaces)
+        WORKDIRS="$2"
+        shift
+        shift
+        ;;
+
+    -n|--docker-networks)
+        DOCKER_NETWORKS="$2"
+        shift
+        shift
+        ;;
+
+    -b|--boilerplate)
+        BOILERPLATE="$2"
+        shift
+        shift
+        ;;
+
+    -a|--additional-apps)
+        ADDITIONAL_APPS="$2"
+        shift
+        shift
+        ;;
+
+    -d|--domain)
+        YOUR_DOMAIN="$2"
+        shift
+        shift
+        ;;
+
+    -e|--email)
+        YOUR_EMAIL="$2"
+        shift
+        shift
+        ;;
+
+    --services-password)
+        SERVICES_PASSWORD="$2"
+        shift
+        shift
+        ;;
+
+    --webhook-url)
+        WEBHOOK_URL="$2"
+        shift
+        shift
+        ;;
+
+    *)    # unknown option
+        POSITIONAL+=("$1") # save it in an array for later
+        echo "Parameter not known: $1"
+        exit 1
+        ;;
+esac
+done
+set -- "${POSITIONAL[@]}" # restore positional parameters
+
+
+# Ping URL With Provisioning Updates
+function provision_ping {
+    if [[ ! -z $WEBHOOK_URL ]]; then
+
+curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
+-H "Accept: application/json" \
+-H "Content-Type:application/json" \
+--data @<(cat <<EOF
+    {
+      "log": "$1"
+    }
+EOF
+) > /dev/null 2>&1
+
+
+    fi
+}
 
 # Outputs install log line
 function setup_log() {
   if $SHOW_LOGS ; then
-      echo -e "\033[1;32m$*\033[m"
+      provision_ping "$1"
+      echo -e "\033[1;32m${1}\033[m"
   fi
 }
 
@@ -112,7 +241,7 @@ function setup_proxy() {
   fi
 
     FILE_ZIPED=${ORIGINAL_NAME}.zip
-    WORKDIR=/var/${VENDOR_NAME}/apps/core
+    WORKDIR=${ROOT_WORKDIR}/apps/core
 
     if [ -d $WORKDIR ]; then
         setup_log "🗑️  Deleting previous files from an unsuccessful previous attempt"
@@ -143,7 +272,14 @@ function setup_proxy() {
             find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
         fi
 
-        for NETWORK_NAME in $DOCKER_NETWORKS; do
+        # Update service credentials
+
+        if [[ ! -z $SERVICES_PASSWORD ]]; then
+            setup_log "🔑 Updating service credentials"
+            find $PROXY_FULL_PATH -type f -exec sed -i "s/your_secure_password/$SERVICES_PASSWORD/g" {} \;
+        fi
+
+        for NETWORK_NAME in $(echo $DOCKER_NETWORKS | sed "s/,/ /g"); do
             create_docker_network $NETWORK_NAME
         done 
 
@@ -151,12 +287,11 @@ function setup_proxy() {
         docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
 
         install_report "Services started"
-        install_report "--------------------------------------------------------------------------------"
         install_report "${PROXY_FULL_PATH}/docker-compose.yml"
 
         # Moves the app folder to the working directory root
         if [[ ! -z $ADDITIONAL_APPS ]]; then
-            for APP in $ADDITIONAL_APPS; do
+            for APP in $(echo $ADDITIONAL_APPS | sed "s/,/ /g"); do
                 if [ -d ${PROXY_FULL_PATH}/examples/${APP} ]; then
                     mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
 
@@ -172,40 +307,11 @@ function setup_proxy() {
 
 }
 
-install_report "--------------------------------------------------------------------------------"
 install_report "Started in: $(TZ=$TIMEZONE date)"
-install_report "--------------------------------------------------------------------------------"
-
-greet
 
 if [ "$(id -u)" != "0" ]; then
    setup_log "❌ Sorry! This script must be run as root." 1>&2
    exit 1
-fi
-
-# prompt
-setup_log "🚀 This script will run the initial settings on this server."
-read -r -p "Type 'Y' to continue or 'n' to cancel (default Y): " GO
-
-if [ "${GO:=Y}" != "Y" ]; then
-    setup_log "❌ Aborting." 1>&2
-    exit 1
-fi
-
-if [ ! -f "./.env" ]; then
-  setup_log "🎲 Do you want to use a file of environment variables to go faster?"
-  read -r -p "Type 'Y' to download and edit the file or 'n' to skip (default Y): " USE_ENV_TEMPLATE
-
-  if [ "${USE_ENV_TEMPLATE:=Y}" == "Y" ]; then
-    setup_log "📥 Downloading template"
-    curl -fsSL $ENV_TEMPLATE -o .env
-    nano .env
-  fi
-fi
-
-# If there is a env file, source it
-if [ -f "./.env" ]; then
-   source ./.env
 fi
 
 # Update timezone
@@ -252,7 +358,12 @@ fi
 # Creates SSH key from root if one does not exist
 if [ ! -e /root/.ssh/id_rsa ]; then
    setup_log "🔑 Creating SSH Keys"
-   ssh-keygen -t rsa
+
+  if [[ -z $SSH_PASSPHRASE ]]; then
+    ssh-keygen -q -t rsa -b 4096 -f id_rsa -C "$YOUR_EMAIL" -N ''
+  else
+    ssh-keygen -q -t rsa -b 4096 -f id_rsa -C "$YOUR_EMAIL" -N "$SSH_PASSPHRASE"
+  fi
 fi
 
 # Create known_hosts file if it doesn't exist
@@ -270,86 +381,59 @@ fi
 wordwrap
 
 # Adds bitbucket.org, gitlab.com, github.com
-setup_log "⚪ Adding bitbucket.org to trusted hosts"
-ssh-keyscan bitbucket.org >> /root/.ssh/known_hosts
-
-wordwrap
-
-setup_log "⚪ Adding gitlab.com to trusted hosts"
-ssh-keyscan gitlab.com >> /root/.ssh/known_hosts
-
-wordwrap
-
-setup_log "⚪ Adding github.com to trusted hosts"
-ssh-keyscan github.com >> /root/.ssh/known_hosts
-
-wordwrap
-
-# Request username for new default user
-if [[ -z $DEPLOYER_USERNAME ]]; then
-  read -r -p "👤 Enter a username for the user who will deploy applications (e.g. deployer): " DEPLOYER_USERNAME
-  if [ -z $DEPLOYER_USERNAME ]; then
-      DEPLOYER_USERNAME=deployer
-      setup_log "ℹ️  Using default value ${DEPLOYER_USERNAME}"
-  fi
-fi
-
-if [[ -z $VENDOR_NAME ]]; then
-  read -r -p "🏢 Enter a default folder name where the apps, storage and backups will be (e.g. yourcompany): " VENDOR_NAME
-  if [[ -z $VENDOR_NAME ]]; then
-      VENDOR_NAME=projects
-      setup_log "ℹ️  Using default value ${VENDOR_NAME}"
-  fi
-fi
+for S_KEYSCAN in $(echo $SSH_KEYSCAN | sed "s/,/ /g"); do
+  setup_log "⚪ Adding $S_KEYSCAN to trusted hosts"
+  ssh-keyscan $S_KEYSCAN >> /root/.ssh/known_hosts
+done
 
 wordwrap
 
 # Adds standard user, if one does not exist.
-if [ `sed -n "/^$DEPLOYER_USERNAME/p" /etc/passwd` ]; then
+if [ `sed -n "/^$DEFAULT_USER/p" /etc/passwd` ]; then
 
-    setup_log "👤 User $DEPLOYER_USERNAME already exists. Skipping..."
+    setup_log "👤 User $DEFAULT_USER already exists. Skipping..."
 
 else
     setup_log "👤 Creating standard user"
-    useradd -s /bin/bash -d /home/$DEPLOYER_USERNAME -m -U $DEPLOYER_USERNAME
+    useradd -s /bin/bash -d /home/$DEFAULT_USER -m -U $DEFAULT_USER
 
-    if [[ -z $DEPLOYER_PASSWORD ]]; then
-      passwd $DEPLOYER_USERNAME
+    if [[ -z $DEFAULT_PASSWORD ]]; then
+      passwd $DEFAULT_USER
     else
-      echo $DEPLOYER_PASSWORD | passwd $DEPLOYER_USERNAME > /dev/null 2>&1
+      echo $DEFAULT_PASSWORD | passwd $DEFAULT_USER > /dev/null 2>&1
     fi
 
     wordwrap
 
     # Copy SSH authorized_keys
     setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
-    if [ ! -d /home/$DEPLOYER_USERNAME/.ssh ]; then
-      mkdir /home/$DEPLOYER_USERNAME/.ssh
+    if [ ! -d /home/$DEFAULT_USER/.ssh ]; then
+      mkdir /home/$DEFAULT_USER/.ssh
     fi
-    cp -r /root/.ssh/* /home/$DEPLOYER_USERNAME/.ssh/
-    chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME /home/$DEPLOYER_USERNAME/.ssh
+    cp -r /root/.ssh/* /home/$DEFAULT_USER/.ssh/
+    chown -R $DEFAULT_USER.$DEFAULT_USER /home/$DEFAULT_USER/.ssh
 
     wordwrap
 
     # add standard user to sudoers
-    setup_log "💪 Adding $DEPLOYER_USERNAME to sudoers with full privileges"
-    echo "$DEPLOYER_USERNAME ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEPLOYER_USERNAME
-    chmod 0440 /etc/sudoers.d/$DEPLOYER_USERNAME
+    setup_log "💪 Adding $DEFAULT_USER to sudoers with full privileges"
+    echo "$DEFAULT_USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEFAULT_USER
+    chmod 0440 /etc/sudoers.d/$DEFAULT_USER
 
     wordwrap
 
-    setup_log "🟢 Adding user $DEPLOYER_USERNAME to group www-data"
-    usermod -aG www-data $DEPLOYER_USERNAME
+    setup_log "🟢 Adding user $DEFAULT_USER to group www-data"
+    usermod -aG www-data $DEFAULT_USER
 
-    setup_log "🟢 Adding user $DEPLOYER_USERNAME to the docker group"
-    usermod -aG docker $DEPLOYER_USERNAME
+    setup_log "🟢 Adding user $DEFAULT_USER to the docker group"
+    usermod -aG docker $DEFAULT_USER
 fi
 
 wordwrap
 
-for WORKDIR in $WORKDIRS; do
+for WORKDIR in $(echo $WORKDIRS | sed "s/,/ /g"); do
 
-  WORKDIR_FULL=${ROOT_WORKDIR}/$VENDOR_NAME/$WORKDIR
+  WORKDIR_FULL=${ROOT_WORKDIR}/$WORKDIR
 
   if [ -d $WORKDIR_FULL ]; then
       setup_log "🗑️  Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
@@ -358,9 +442,6 @@ for WORKDIR in $WORKDIRS; do
 
 	setup_log "📂 Creating working directory ${WORKDIR_FULL}"
 	mkdir -p $WORKDIR_FULL
-
-	setup_log "🔗 Creating symbolic link for ${WORKDIR_FULL}"
-	ln -sfn $WORKDIR_FULL /home/$DEPLOYER_USERNAME/$WORKDIR
 
   wordwrap
 
@@ -372,8 +453,8 @@ fi
 
 wordwrap
 
-setup_log "🔁 Changing owner of the root working directory to $DEPLOYER_USERNAME"
-chown -R $DEPLOYER_USERNAME.$DEPLOYER_USERNAME ${ROOT_WORKDIR}/$VENDOR_NAME
+setup_log "🔁 Changing owner of the root working directory to $DEFAULT_USER"
+chown -R $DEFAULT_USER.$DEFAULT_USER ${ROOT_WORKDIR}
 
 wordwrap
 
@@ -381,11 +462,9 @@ setup_log "🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
-install_report "--------------------------------------------------------------------------------"
 install_report "Finished on: $(TZ=$TIMEZONE date)"
-install_report "--------------------------------------------------------------------------------"
 
 # Finish
-setup_log "✅ Concluded! Please restart the server to apply some changes."
+setup_log "✅ Concluded!"
 wordwrap
 cat install-report.txt
