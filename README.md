@@ -23,8 +23,52 @@ To speed things up, you can create an `.env` file in the same path where you run
 To do the setup, download and run the script `setup-vps.sh` or if you prefer (proceed at your own risk), execute the instruction below.
 
 ```
-curl -fsSL https://git.io/fpgbw -o setup-vps.sh && bash setup-vps.sh
+wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- \
+--timezone America/Sao_Paulo \
+--root-password your_secure_password \
+--default-user cubed \
+--default-password your_secure_password \
+--workdir /home/cubed \
+--spaces apps,backups \
+--docker-networks nginx-proxy,internal \
+--boilerplate nginx \
+--additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--domain yourdomain.com \
+--email email@yourdomain.com \
+--services-password your_secure_password
 ```
+
+## Command options
+
+You can get help by passing the `-h` option.
+
+~~~
+Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
+USAGE:
+    wget -qO- https://raw.githubusercontent.com/fabioassuncao/setup-vps/master/setup-vps.sh | bash -s -- [OPTIONS]
+OPTIONS:
+
+-t|--timezone               Standard system timezone
+--docker-compose-version    Version of the docker compose to be installed
+--root-password             New root user password. The script forces the password update
+--default-user              Alternative user (with super powers) that will be used for deploys and remote access later
+--default-password
+--workdir                   Folder where all files of this setup will be stored
+--spaces                    Subfolders where applications will be allocated
+-n|--docker-networks        Docker networks to be created
+-b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
+-a|--additional-apps        Additional applications that will be installed along with the proxy
+-d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
+                            After everything is set up, you can access the services as follows: service.yourdomain.com
+-e|--email                  Email that Let's Encrypt will use to generate SSL certificates
+--ssh-passphrase            Provides a passphrase for the ssh key
+
+OPTIONS (Service Credentials):
+--services-password         New services password
+
+OPTIONS (Webhook):
+--webhook-url               Ping URL With Provisioning Updates
+~~~
 
 ## Important
 In order for you to be able to deploy applications using git and some deployment tools such as the [deployer](https://deployer.org/), you will need to add the public key (id_rsa.pub) of the user created on your VCS server (bitbucket, gitlab, github, etc.).
