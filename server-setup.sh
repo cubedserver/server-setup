@@ -229,13 +229,18 @@ function create_docker_network() {
     docker network ls|grep $NETWORK_NAME > /dev/null || docker network create $NETWORK_NAME
 }
 
-# Remove images and containers from a previous unsuccessful attempt
+# Remove images, volumes and containers from a previous unsuccessful attempt
 function docker_reset() {
   CONTAINERS=$(docker ps -a -q)
   if [[ ! -z $CONTAINERS ]]; then
       docker stop $CONTAINERS
       docker rm $CONTAINERS
       docker system prune -a --force
+  fi
+
+  VOLUMES=$(docker volume ls -q)
+  if [[ ! -z $VOLUMES ]]; then
+        docker volume rm $VOLUMES
   fi
 }
 
