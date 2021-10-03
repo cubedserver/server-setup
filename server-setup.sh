@@ -204,7 +204,6 @@ curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
 EOF
 ) > /dev/null 2>&1
 
-
     fi
 }
 
@@ -220,17 +219,13 @@ function error() {
     exit 1
 }
 
-function wordwrap() {
-    echo -e "\n"
-}
-
 function install_report() {
     echo $* >> install-report.txt
 }
 
 function create_docker_network() {
     NETWORK_NAME=$1
-    setup_log "⚡ Creating Docker network ${NETWORK_NAME}"
+    setup_log "---> ⚡ Creating Docker network ${NETWORK_NAME}"
     docker network ls|grep $NETWORK_NAME > /dev/null || docker network create $NETWORK_NAME
 }
 
@@ -264,59 +259,65 @@ function setup_proxy() {
     WORKDIR=${ROOT_WORKDIR}/apps/core
 
     if [ -d $WORKDIR ]; then
-        setup_log "🗑️  Deleting previous files from an unsuccessful previous attempt"
+        setup_log "---> 🗑️  Deleting previous files from an unsuccessful previous attempt"
         rm -rf $WORKDIR
     fi
 
-    setup_log "📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
+    setup_log "---> 📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
     mkdir -p $WORKDIR
 
     PROXY_FULL_PATH=${WORKDIR}/${DIR_NAME}
     
-    setup_log "📥 Downloading boilerplate ${BOILERPLATE}"
+    setup_log "---> 📥 Downloading boilerplate ${BOILERPLATE}"
     wget -q $BOILERPLATE_URL -O $FILE_ZIPED
 
     if [ ! -f $FILE_ZIPED ]; then
-        setup_log "❌ Failed to download proxy files. Skipping..."
+        setup_log "---> ❌ Failed to download proxy files. Skipping..."
     else
-        setup_log "🗃️ Extracting files from ${FILE_ZIPED}"
+        setup_log "---> 🗃️ Extracting files from ${FILE_ZIPED}"
         unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv ${ORIGINAL_NAME}-master $PROXY_FULL_PATH
 
         if [[ ! -z $YOUR_EMAIL ]]; then
-            setup_log "📧 Overriding ${EXAMPLE_EMAIL} to ${YOUR_EMAIL} email from configuration files"
+            setup_log "---> 📧 Overriding ${EXAMPLE_EMAIL} to ${YOUR_EMAIL} email from configuration files"
             find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_EMAIL/$YOUR_EMAIL/g" {} \;
+            install_report "---> EXAMPLE_EMAIL: $EXAMPLE_EMAIL"
         fi
 
         if [[ ! -z $YOUR_DOMAIN ]]; then
-            setup_log "🌐 Overriding ${EXAMPLE_DOMAIN} to ${YOUR_DOMAIN} domain for configuration files"
+            setup_log "---> 🌐 Overriding ${EXAMPLE_DOMAIN} to ${YOUR_DOMAIN} domain for configuration files"
             find $PROXY_FULL_PATH -type f -exec sed -i "s/$EXAMPLE_DOMAIN/$YOUR_DOMAIN/g" {} \;
+            install_report "---> YOUR_DOMAIN: $YOUR_DOMAIN"
         fi
 
         # Update service credentials
-        setup_log "🔑 Updating Service Credentials"
+        setup_log "---> 🔑 Updating Service Credentials"
 
         if [[ ! -z $MYSQL_PASSWORD ]]; then
             sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/examples/mysql/docker-compose.yml
+            install_report "---> MYSQL_PASSWORD: $MYSQL_PASSWORD"
         fi
 
         if [[ ! -z $POSTGRES_PASSWORD ]]; then
             sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/examples/postgres/docker-compose.yml
+            install_report "---> POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
         fi
 
         if [[ ! -z $REDIS_PASSWORD ]]; then
             sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/examples/redis/docker-compose.yml
+            install_report "---> REDIS_PASSWORD: $REDIS_PASSWORD"
         fi
 
         if [[ ! -z $TRAEFIK_CREDENTIALS ]]; then
             OLD_TRAEFIK_CREDENTIALS="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
             sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
+            install_report "---> TRAEFIK_PASSWORD: $TRAEFIK_PASSWORD"
         fi
 
         for NETWORK_NAME in $(echo $DOCKER_NETWORKS | sed "s/,/ /g"); do
             create_docker_network $NETWORK_NAME
         done 
 
-        setup_log "⚡ Starting reverse proxy containers"
+        setup_log "---> ⚡ Starting reverse proxy containers"
         docker-compose -f ${PROXY_FULL_PATH}/docker-compose.yml up -d
 
         install_report "Services started"
@@ -328,11 +329,11 @@ function setup_proxy() {
                 if [ -d ${PROXY_FULL_PATH}/examples/${APP} ]; then
                     mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
 
-                    setup_log "⚡ Starting ${APP} container"
+                    setup_log "---> ⚡ Starting ${APP} container"
                     docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d
                     install_report "${WORKDIR}/${APP}/docker-compose.yml"
                 else
-                    setup_log "❌ App ${APP} files not found. Skipping..."
+                    setup_log "---> ❌ App ${APP} files not found. Skipping..."
                 fi
             done    
         fi
@@ -349,86 +350,75 @@ fi
 check_apache2
 
 # Update timezone
-setup_log "🕒 Updating packages and setting the timezone"
+setup_log "---> 🕒 Updating packages and setting the timezone"
 apt-get update -qq >/dev/null
 timedatectl set-timezone $DEFAULT_TIMEZONE
 
-setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
+setup_log "---> 🟢 Installing essential programs (git zip unzip curl wget acl)"
 apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils
 
-wordwrap
-
 if [ -x "$(command -v docker)" ]; then
-    setup_log "🐳 Docker previously installed! Resetting containers, images and networks."
+    setup_log "---> 🐳 Docker previously installed! Resetting containers, images and networks."
     docker_reset
 else
-    setup_log "🐳 Installing docker"
+    setup_log "---> 🐳 Installing docker"
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 fi
 
-wordwrap
-
 if [ ! -f /usr/local/bin/docker-compose ]; then
-  setup_log "📦 Installing docker-compose"
+  setup_log "---> 📦 Installing docker-compose"
   curl -L "https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
   chmod +x /usr/local/bin/docker-compose
 
-  wordwrap
 else
-    setup_log "📦 Docker-compose previously installed! Skipping..."
+    setup_log "---> 📦 Docker-compose previously installed! Skipping..."
 fi
 
-wordwrap
-
 # Set root password
-setup_log "🔑 Setting the root password"
+setup_log "---> 🔑 Setting the root password"
 
 if [[ -z $ROOT_PASSWORD ]]; then
   passwd
 else
   echo $ROOT_PASSWORD | passwd > /dev/null 2>&1
+  install_report "---> ROOT_PASSWORD: $ROOT_PASSWORD"
 fi
 
 # Creates SSH key from root if one does not exist
 if [ ! -e /root/.ssh/id_rsa ]; then
-   setup_log "🔑 Creating SSH Keys"
+   setup_log "---> 🔑 Creating SSH Keys"
 
   if [[ -z $SSH_PASSPHRASE ]]; then
     ssh-keygen -q -t rsa -b 4096 -f id_rsa -C "$YOUR_EMAIL" -N ''
   else
     ssh-keygen -q -t rsa -b 4096 -f id_rsa -C "$YOUR_EMAIL" -N "$SSH_PASSPHRASE"
+    install_report "---> SSH_PASSPHRASE: $SSH_PASSPHRASE"
   fi
 fi
 
 # Create known_hosts file if it doesn't exist
 if [ ! -e /root/.ssh/known_hosts ]; then
-   setup_log "📄 Creating file known_hosts"
+   setup_log "---> 📄 Creating file known_hosts"
    touch /root/.ssh/known_hosts
 fi
 
 # Create authorized_keys file if it doesn't exist
 if [ ! -e /root/.ssh/authorized_keys ]; then
-  setup_log "📄 Creating file authorized_keys"
+  setup_log "---> 📄 Creating file authorized_keys"
   touch /root/.ssh/authorized_keys
 fi
 
-wordwrap
-
 # Adds bitbucket.org, gitlab.com, github.com
 for S_KEYSCAN in $(echo $SSH_KEYSCAN | sed "s/,/ /g"); do
-  setup_log "⚪ Adding $S_KEYSCAN to trusted hosts"
+  setup_log "---> ⚪ Adding $S_KEYSCAN to trusted hosts"
   ssh-keyscan $S_KEYSCAN >> /root/.ssh/known_hosts
 done
 
-wordwrap
-
 # Adds standard user, if one does not exist.
 if [ `sed -n "/^$DEFAULT_USER/p" /etc/passwd` ]; then
-
-    setup_log "👤 User $DEFAULT_USER already exists. Skipping..."
-
+    setup_log "---> 👤 User $DEFAULT_USER already exists. Skipping..."
 else
-    setup_log "👤 Creating standard user"
+    setup_log "---> 👤 Creating standard user"
     useradd -s /bin/bash -d /home/$DEFAULT_USER -m -U $DEFAULT_USER
 
     if [[ -z $DEFAULT_USER_PASSWORD ]]; then
@@ -437,62 +427,50 @@ else
       echo $DEFAULT_USER_PASSWORD | passwd $DEFAULT_USER > /dev/null 2>&1
     fi
 
-    wordwrap
-
     # Copy SSH authorized_keys
-    setup_log "🗂️ Copying the SSH public key to the home directory of the new default user"
+    setup_log "---> 🗂️ Copying the SSH public key to the home directory of the new default user"
     if [ ! -d /home/$DEFAULT_USER/.ssh ]; then
       mkdir /home/$DEFAULT_USER/.ssh
     fi
     cp -r /root/.ssh/* /home/$DEFAULT_USER/.ssh/
     chown -R $DEFAULT_USER.$DEFAULT_USER /home/$DEFAULT_USER/.ssh
 
-    wordwrap
-
     # add standard user to sudoers
-    setup_log "💪 Adding $DEFAULT_USER to sudoers with full privileges"
+    setup_log "---> 💪 Adding $DEFAULT_USER to sudoers with full privileges"
     echo "$DEFAULT_USER ALL=(ALL:ALL) NOPASSWD: ALL" > /etc/sudoers.d/$DEFAULT_USER
     chmod 0440 /etc/sudoers.d/$DEFAULT_USER
 
-    wordwrap
-
-    setup_log "🟢 Adding user $DEFAULT_USER to group www-data"
+    setup_log "---> 🟢 Adding user $DEFAULT_USER to group www-data"
     usermod -aG www-data $DEFAULT_USER
 
-    setup_log "🟢 Adding user $DEFAULT_USER to the docker group"
+    setup_log "---> 🟢 Adding user $DEFAULT_USER to the docker group"
     usermod -aG docker $DEFAULT_USER
 fi
 
-wordwrap
 
 for WORKDIR in $(echo $WORKDIRS | sed "s/,/ /g"); do
 
   WORKDIR_FULL=${ROOT_WORKDIR}/$WORKDIR
 
   if [ -d $WORKDIR_FULL ]; then
-      setup_log "🗑️  Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
+      setup_log "---> 🗑️  Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
       rm -rf $WORKDIR_FULL
   fi
 
-	setup_log "📂 Creating working directory ${WORKDIR_FULL}"
+	setup_log "---> 📂 Creating working directory ${WORKDIR_FULL}"
 	mkdir -p $WORKDIR_FULL
-
-  wordwrap
-
 done
 
 if $INSTALL_PROXY ; then
     setup_proxy $BOILERPLATE
 fi
 
-wordwrap
 
-setup_log "🔁 Changing owner of the root working directory to $DEFAULT_USER"
+setup_log "---> 🔁 Changing owner of the root working directory to $DEFAULT_USER"
 chown -R $DEFAULT_USER.$DEFAULT_USER ${ROOT_WORKDIR}
 
-wordwrap
 
-setup_log "🧹 Cleaning up"
+setup_log "---> 🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
@@ -536,8 +514,6 @@ EOF
 fi
 
 # Finish
-setup_log "✅ Concluded!"
+echo -e "✅ Concluded!"
 
-
-wordwrap
 cat install-report.txt
