@@ -1,18 +1,18 @@
 #!/bin/bash
 
 # nginx proxy files
-BOILERPLATE_NGINX_URL="https://github.com/cubedserver/docker-boilerplate-nginx-proxy/archive/master.zip"
-ORIGINAL_NAME_NGINX=docker-boilerplate-nginx-proxy
+TEMPLATE_NGINX_URL="https://github.com/cubedserver/docker-nginx-proxy/archive/master.zip"
+ORIGINAL_NAME_NGINX=docker-nginx-proxy
 DIR_NAME_NGINX=nginx-proxy
 
 # traefik proxy files
-BOILERPLATE_TRAEFIK_URL="https://github.com/cubedserver/docker-boilerplate-traefik-proxy/archive/master.zip"
-ORIGINAL_NAME_TRAEFIK=docker-boilerplate-traefik-proxy
+TEMPLATE_TRAEFIK_URL="https://github.com/cubedserver/docker-traefik-proxy/archive/master.zip"
+ORIGINAL_NAME_TRAEFIK=docker-traefik-proxy
 DIR_NAME_TRAEFIK=traefik-proxy
 
 # Example values that will be replaced
-EXAMPLE_DOMAIN=domain.test
-EXAMPLE_EMAIL=email@domain.test
+EXAMPLE_DOMAIN=yourdomain.com
+EXAMPLE_EMAIL=email@yourdomain.com
 
 # Defaults
 INSTALL_PROXY=true
@@ -244,11 +244,11 @@ function setup_proxy() {
   BOILERPLATE=$1
 
   if [ $BOILERPLATE == "nginx" ]; then
-      BOILERPLATE_URL=$BOILERPLATE_NGINX_URL
+      BOILERPLATE_URL=$TEMPLATE_NGINX_URL
       ORIGINAL_NAME=$ORIGINAL_NAME_NGINX
       DIR_NAME=$DIR_NAME_NGINX
   else
-      BOILERPLATE_URL=$BOILERPLATE_TRAEFIK_URL
+      BOILERPLATE_URL=$TEMPLATE_TRAEFIK_URL
       ORIGINAL_NAME=$ORIGINAL_NAME_TRAEFIK
       DIR_NAME=$DIR_NAME_TRAEFIK
 
@@ -293,17 +293,17 @@ function setup_proxy() {
         setup_log "---> 🔑 Updating Service Credentials"
 
         if [[ ! -z $MYSQL_PASSWORD ]]; then
-            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/examples/mysql/docker-compose.yml
+            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/templates/mysql/docker-compose.yml
             install_report "---> MYSQL_PASSWORD: $MYSQL_PASSWORD"
         fi
 
         if [[ ! -z $POSTGRES_PASSWORD ]]; then
-            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/examples/postgres/docker-compose.yml
+            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/templates/postgres/docker-compose.yml
             install_report "---> POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
         fi
 
         if [[ ! -z $REDIS_PASSWORD ]]; then
-            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/examples/redis/docker-compose.yml
+            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/templates/redis/docker-compose.yml
             install_report "---> REDIS_PASSWORD: $REDIS_PASSWORD"
         fi
 
@@ -332,8 +332,8 @@ function setup_proxy() {
         # Moves the app folder to the working directory root
         if [[ ! -z $ADDITIONAL_APPS ]]; then
             for APP in $(echo $ADDITIONAL_APPS | sed "s/,/ /g"); do
-                if [ -d ${PROXY_FULL_PATH}/examples/${APP} ]; then
-                    mv ${PROXY_FULL_PATH}/examples/${APP} ${WORKDIR}/${APP}
+                if [ -d ${PROXY_FULL_PATH}/templates/${APP} ]; then
+                    mv ${PROXY_FULL_PATH}/templates/${APP} ${WORKDIR}/${APP}
 
                     setup_log "---> ⚡ Starting ${APP} container"
                     docker-compose -f ${WORKDIR}/${APP}/docker-compose.yml up -d

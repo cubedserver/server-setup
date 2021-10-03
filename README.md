@@ -1,4 +1,4 @@
-# Basic Host Setup
+# Server Setup
 
 <div align="center">
   <img src="cover.svg" loading="lazy" />
@@ -93,9 +93,9 @@ ssh-copy-id <USERNAME>@<SERVER IP>
 
 If you are looking for a boilerplate for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
 
- * [cubedserver/docker-boilerplate-traefik-proxy](https://github.com/cubedserver/docker-boilerplate-traefik-proxy)
+ * [cubedserver/docker-traefik-proxy](https://github.com/cubedserver/docker-traefik-proxy)
 
- * [cubedserver/docker-boilerplate-nginx-proxy](https://github.com/cubedserver/docker-boilerplate-nginx-proxy)
+ * [cubedserver/docker-nginx-proxy](https://github.com/cubedserver/docker-nginx-proxy)
 
 ## Contributing
 
