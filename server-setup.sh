@@ -16,13 +16,9 @@ EXAMPLE_EMAIL=email@domain.test
 
 # Defaults
 INSTALL_PROXY=true
-SHOW_LOGS=true
 SSH_PASSPHRASE=
-TIMEZONE=America/Sao_Paulo
 DOCKER_COMPOSE_VERSION=1.29.2
-ROOT_PASSWORD=YourSecurePassword
 DEFAULT_USER=cubed
-DEFAULT_PASSWORD=YourSecurePassword
 ROOT_WORKDIR=/home/$DEFAULT_USER
 WORKDIRS=apps,backups
 DOCKER_NETWORKS=nginx-proxy,internal
@@ -32,11 +28,15 @@ YOUR_DOMAIN=yourdomain.com
 YOUR_EMAIL=email@yourdomain.com
 SSH_KEYSCAN='bitbucket.org,gitlab.com,github.com'
 
-MYSQL_PASSWORD=
-POSTGRES_PASSWORD=
-REDIS_PASSWORD=
-TRAEFIK_PASSWORD=
+: ${DEFAULT_TIMEZONE:='America/Sao_Paulo'}
 
+: ${ROOT_PASSWORD:=`openssl rand -hex 8`}
+: ${DEFAULT_USER_PASSWORD:=`openssl rand -hex 8`}
+
+: ${MYSQL_PASSWORD:=`openssl rand -hex 8`}
+: ${POSTGRES_PASSWORD:=`openssl rand -hex 8`}
+: ${REDIS_PASSWORD:=`openssl rand -hex 8`}
+: ${TRAEFIK_PASSWORD:=`openssl rand -hex 8`}
 
 WEBHOOK_URL=
 
@@ -48,13 +48,14 @@ USAGE:
     wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
 OPTIONS:
 
+-h|--help                   Print help
 -t|--timezone               Standard system timezone
 --docker-compose-version    Version of the docker compose to be installed
 --root-password             New root user password. The script forces the password update
 --default-user              Alternative user (with super powers) that will be used for deploys and remote access later
---default-password
+--default-user-password
 --workdir                   Folder where all files of this setup will be stored
---spaces                    Subfolders where applications will be allocated
+--spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
 -b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
 -a|--additional-apps        Additional applications that will be installed along with the proxy
@@ -92,110 +93,91 @@ case $key in
         ;;
     --ssh-passphrase)
         SSH_PASSPHRASE="$2"
-        shift # past argument
-        shift # past value
+        shift 2
         ;;
 
     -t|--timezone)
-        TIMEZONE="$2"
-        shift
-        shift
+        DEFAULT_TIMEZONE="$2"
+        shift 2
         ;;
 
     --docker-compose-version)
         DOCKER_COMPOSE_VERSION="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --root-password)
         ROOT_PASSWORD="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --default-user)
         DEFAULT_USER="$2"
-        shift
-        shift
+        shift 2
         ;;
-    --default-password)
-        DEFAULT_PASSWORD="$2"
-        shift
-        shift
+    --default-user-password)
+        DEFAULT_USER_PASSWORD="$2"
+        shift 2
         ;;
 
     --workdir)
         ROOT_WORKDIR="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --spaces)
         WORKDIRS="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     -n|--docker-networks)
         DOCKER_NETWORKS="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     -b|--boilerplate)
         BOILERPLATE="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     -a|--additional-apps)
         ADDITIONAL_APPS="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     -d|--domain)
         YOUR_DOMAIN="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     -e|--email)
         YOUR_EMAIL="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --mysql-password)
         MYSQL_PASSWORD="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --postgres-password)
         POSTGRES_PASSWORD="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --redis-password)
         REDIS_PASSWORD="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     --traefik-password)
-        TRAEFIK_PASSWORD=$(htpasswd -nb admin $2)
-
-        shift
-        shift
+        TRAEFIK_PASSWORD="$2"
+        shift 2
         ;;
 
     --webhook-url)
         WEBHOOK_URL="$2"
-        shift
-        shift
+        shift 2
         ;;
 
     *)    # unknown option
@@ -207,17 +189,17 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-
 # Ping URL With Provisioning Updates
 function provision_ping {
     if [[ ! -z $WEBHOOK_URL ]]; then
 
 curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
 -H "Accept: application/json" \
--H "Content-Type:application/json" \
+-H "Content-Type: application/json" \
 --data @<(cat <<EOF
     {
-      "log": "$1"
+      "message": "$1",
+      "status": "IN_PROGRESS"
     }
 EOF
 ) > /dev/null 2>&1
@@ -228,22 +210,18 @@ EOF
 
 # Outputs install log line
 function setup_log() {
-  if $SHOW_LOGS ; then
-      provision_ping "$1"
-      echo -e "\033[1;32m${1}\033[m"
-  fi
+    provision_ping "$1"
+    echo -e $1
 }
 
 function error() {
     provision_ping "$1"
-    echo "\033[0;31m${1}\033[m" >&2
+    echo "$1" >&2
     exit 1
 }
 
 function wordwrap() {
-  if $SHOW_LOGS ; then
     echo -e "\n"
-  fi
 }
 
 function install_report() {
@@ -278,6 +256,8 @@ function setup_proxy() {
       BOILERPLATE_URL=$BOILERPLATE_TRAEFIK_URL
       ORIGINAL_NAME=$ORIGINAL_NAME_TRAEFIK
       DIR_NAME=$DIR_NAME_TRAEFIK
+
+      TRAEFIK_CREDENTIALS=`htpasswd -nb admin $TRAEFIK_PASSWORD`
   fi
 
     FILE_ZIPED=${ORIGINAL_NAME}.zip
@@ -316,21 +296,20 @@ function setup_proxy() {
         setup_log "🔑 Updating Service Credentials"
 
         if [[ ! -z $MYSQL_PASSWORD ]]; then
-            find $PROXY_FULL_PATH/examples/mysql -type f -exec sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" {} \;
+            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/examples/mysql/docker-compose.yml
         fi
 
         if [[ ! -z $POSTGRES_PASSWORD ]]; then
-            find $PROXY_FULL_PATH/examples/postgres -type f -exec sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" {} \;
+            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/examples/postgres/docker-compose.yml
         fi
 
         if [[ ! -z $REDIS_PASSWORD ]]; then
-            find $PROXY_FULL_PATH/examples/redis -type f -exec sed -i "s/your_secure_password/$REDIS_PASSWORD/g" {} \;
+            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/examples/redis/docker-compose.yml
         fi
 
-        if [[ ! -z $TRAEFIK_PASSWORD ]]; then
-            OLD_TRAEFIK_PASSWORD="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
-
-            sed -i "s/$OLD_TRAEFIK_PASSWORD/$TRAEFIK_PASSWORD/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
+        if [[ ! -z $TRAEFIK_CREDENTIALS ]]; then
+            OLD_TRAEFIK_CREDENTIALS="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
+            sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
         fi
 
         for NETWORK_NAME in $(echo $DOCKER_NETWORKS | sed "s/,/ /g"); do
@@ -361,7 +340,7 @@ function setup_proxy() {
 
 }
 
-install_report "Started in: $(TZ=$TIMEZONE date)"
+install_report "Started in: $(TZ=$DEFAULT_TIMEZONE date)"
 
 if [ "$(id -u)" != "0" ]; then
    error "❌ Sorry! This script must be run as root."
@@ -372,7 +351,7 @@ check_apache2
 # Update timezone
 setup_log "🕒 Updating packages and setting the timezone"
 apt-get update -qq >/dev/null
-timedatectl set-timezone $TIMEZONE
+timedatectl set-timezone $DEFAULT_TIMEZONE
 
 setup_log "🟢 Installing essential programs (git zip unzip curl wget acl)"
 apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils
@@ -452,10 +431,10 @@ else
     setup_log "👤 Creating standard user"
     useradd -s /bin/bash -d /home/$DEFAULT_USER -m -U $DEFAULT_USER
 
-    if [[ -z $DEFAULT_PASSWORD ]]; then
+    if [[ -z $DEFAULT_USER_PASSWORD ]]; then
       passwd $DEFAULT_USER
     else
-      echo $DEFAULT_PASSWORD | passwd $DEFAULT_USER > /dev/null 2>&1
+      echo $DEFAULT_USER_PASSWORD | passwd $DEFAULT_USER > /dev/null 2>&1
     fi
 
     wordwrap
@@ -517,9 +496,48 @@ setup_log "🧹 Cleaning up"
 apt-get autoremove -y
 apt-get clean -y
 
-install_report "Finished on: $(TZ=$TIMEZONE date)"
+install_report "Finished on: $(TZ=$DEFAULT_TIMEZONE date)"
+
+if [[ ! -z $WEBHOOK_URL ]]; then
+echo -e "🔄 Sending data to the Webhook."
+curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
+-H "Accept: application/json" \
+-H "Content-Type: application/json" \
+--data @<(cat <<EOF
+    {
+        "message": "Installation finished",
+        "status": "FINISHED",
+        "data": {
+        "INSTALL_PROXY": "$INSTALL_PROXY",
+        "SSH_PASSPHRASE": "$SSH_PASSPHRASE",
+        "DEFAULT_TIMEZONE": "$DEFAULT_TIMEZONE",
+        "DOCKER_COMPOSE_VERSION": "$DOCKER_COMPOSE_VERSION",
+        "ROOT_PASSWORD": "$ROOT_PASSWORD",
+        "DEFAULT_USER": "$DEFAULT_USER",
+        "DEFAULT_USER_PASSWORD": "$DEFAULT_USER_PASSWORD",
+
+        "WORKDIR": "/home/$DEFAULT_USER",
+        "DOCKER_NETWORKS": "$DOCKER_NETWORKS",
+        "BOILERPLATE": "$BOILERPLATE",
+        "ADDITIONAL_APPS": "$ADDITIONAL_APPS",
+        "YOUR_DOMAIN": "$YOUR_DOMAIN",
+        "YOUR_EMAIL": "$YOUR_EMAIL",
+
+        "MYSQL_PASSWORD": "$MYSQL_PASSWORD",
+        "POSTGRES_PASSWORD": "$POSTGRES_PASSWORD",
+        "REDIS_PASSWORD": "$REDIS_PASSWORD",
+        "TRAEFIK_PASSWORD": "$TRAEFIK_PASSWORD",
+        "TRAEFIK_CREDENTIALS": "$TRAEFIK_CREDENTIALS"
+        }
+    }
+EOF
+) > /dev/null 2>&1
+
+fi
 
 # Finish
 setup_log "✅ Concluded!"
+
+
 wordwrap
 cat install-report.txt

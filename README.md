@@ -20,21 +20,27 @@ Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in
 
 To do the setup, download and run the script `server-setup.sh` or if you prefer (proceed at your own risk), execute the instruction below.
 
-```
+## Installation
+
+Basic installation with TRAEFIK as default
+~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
---timezone America/Sao_Paulo \
---root-password your_secure_password \
---default-user cubed \
---default-password your_secure_password \
---workdir /home/cubed \
---spaces apps,backups \
+--docker-networks web,internal \
+--boilerplate traefik \
+--additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--domain example.com \
+--email email@example.com
+~~~
+
+Basic installation with NGINX as default
+~~~
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
 --docker-networks nginx-proxy,internal \
 --boilerplate nginx \
 --additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
---domain yourdomain.com \
---email email@yourdomain.com \
---services-password your_secure_password
-```
+--domain example.com \
+--email email@example.com
+~~~
 
 ## Command options
 
@@ -46,13 +52,14 @@ USAGE:
     wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
 OPTIONS:
 
+-h|--help                   Print help
 -t|--timezone               Standard system timezone
 --docker-compose-version    Version of the docker compose to be installed
 --root-password             New root user password. The script forces the password update
 --default-user              Alternative user (with super powers) that will be used for deploys and remote access later
---default-password
+--default-user-password
 --workdir                   Folder where all files of this setup will be stored
---spaces                    Subfolders where applications will be allocated
+--spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
 -b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
 -a|--additional-apps        Additional applications that will be installed along with the proxy
