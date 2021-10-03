@@ -19,7 +19,7 @@ SSH_PASSPHRASE=
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
 : ${WORKDIRS:='apps,backups'}
 : ${TEMPLATE:='nginx'}
-: ${APP_TEMPLATES:='mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer'}
+: ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 
 : ${DEFAULT_TIMEZONE:='America/Sao_Paulo'}
 : ${ROOT_PASSWORD:=`openssl rand -base64 8`}
