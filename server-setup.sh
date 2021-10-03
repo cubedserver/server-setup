@@ -1,42 +1,37 @@
 #!/bin/bash
 
-# nginx proxy files
-TEMPLATE_NGINX_URL="https://github.com/cubedserver/docker-nginx-proxy/archive/master.zip"
-ORIGINAL_NAME_NGINX=docker-nginx-proxy
-DIR_NAME_NGINX=nginx-proxy
-
-# traefik proxy files
-TEMPLATE_TRAEFIK_URL="https://github.com/cubedserver/docker-traefik-proxy/archive/master.zip"
-ORIGINAL_NAME_TRAEFIK=docker-traefik-proxy
-DIR_NAME_TRAEFIK=traefik-proxy
-
 # Example values that will be replaced
 EXAMPLE_DOMAIN=yourdomain.com
 EXAMPLE_EMAIL=email@yourdomain.com
 
-# Defaults
 INSTALL_PROXY=true
 SSH_PASSPHRASE=
-DOCKER_COMPOSE_VERSION=1.29.2
-DEFAULT_USER=cubed
-DEFAULT_WORKDIR=/home/$DEFAULT_USER
-WORKDIRS=apps,backups
-DOCKER_NETWORKS=nginx-proxy,internal
-TEMPLATE=nginx
-ADDITIONAL_APPS=mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer
-YOUR_DOMAIN=yourdomain.com
-YOUR_EMAIL=email@yourdomain.com
-SSH_KEYSCAN='bitbucket.org,gitlab.com,github.com'
+
+# Defaults
+: ${TEMPLATE_NGINX_URL:='https://github.com/cubedserver/docker-nginx-proxy/archive/master.zip'}
+: ${TEMPLATE_TRAEFIK_URL:='https://github.com/cubedserver/docker-traefik-proxy/archive/master.zip'}
+
+: ${YOUR_DOMAIN:='yourdomain.com'}
+: ${YOUR_EMAIL:='email@yourdomain.com'}
+
+: ${DOCKER_COMPOSE_VERSION:='1.29.2'}
+
+: ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
+: ${WORKDIRS:='apps,backups'}
+: ${TEMPLATE:='nginx'}
+: ${APP_TEMPLATES:='mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer'}
 
 : ${DEFAULT_TIMEZONE:='America/Sao_Paulo'}
+: ${ROOT_PASSWORD:=`openssl rand -base64 8`}
 
-: ${ROOT_PASSWORD:=`openssl rand -hex 8`}
-: ${DEFAULT_USER_PASSWORD:=`openssl rand -hex 8`}
+: ${DEFAULT_USER:='cubed'}
+: ${DEFAULT_USER_PASSWORD:=`openssl rand -base64 8`}
+: ${DEFAULT_WORKDIR:='/home/cubed'}
 
-: ${MYSQL_PASSWORD:=`openssl rand -hex 8`}
-: ${POSTGRES_PASSWORD:=`openssl rand -hex 8`}
-: ${REDIS_PASSWORD:=`openssl rand -hex 8`}
-: ${TRAEFIK_PASSWORD:=`openssl rand -hex 8`}
+: ${MYSQL_PASSWORD:=`openssl rand -base64 8`}
+: ${POSTGRES_PASSWORD:=`openssl rand -base64 8`}
+: ${REDIS_PASSWORD:=`openssl rand -base64 8`}
+: ${TRAEFIK_PASSWORD:=`openssl rand -base64 8`}
 
 WEBHOOK_URL=
 
@@ -57,8 +52,8 @@ OPTIONS:
 --workdir                   Folder where all files of this setup will be stored
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
--b|--template               Proxy templates to be installed. Currently traefik and nginx are available
--a|--additional-apps        Additional applications that will be installed along with the proxy
+-b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
+-a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.com
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
@@ -77,7 +72,7 @@ HERE
 
 check_apache2() {
   if dpkg -l | grep -q apache2-bin; then
-    error "You must uninstall the Apache2 server first";
+    error "You must uninstall the Apache2 server first.";
   fi
 }
 
@@ -135,13 +130,13 @@ case $key in
         shift 2
         ;;
 
-    -b|--template)
+    -b|--proxy-template)
         TEMPLATE="$2"
         shift 2
         ;;
 
-    -a|--additional-apps)
-        ADDITIONAL_APPS="$2"
+    -a|--app-templates)
+        APP_TEMPLATES="$2"
         shift 2
         ;;
 
@@ -240,7 +235,7 @@ function docker_reset() {
 
   VOLUMES=$(docker volume ls -q)
   if [[ ! -z $VOLUMES ]]; then
-        docker volume rm $VOLUMES
+      docker volume rm $VOLUMES
   fi
 }
 
@@ -250,18 +245,20 @@ function setup_proxy() {
 
   if [ $TEMPLATE == "nginx" ]; then
       TEMPLATE_URL=$TEMPLATE_NGINX_URL
-      ORIGINAL_NAME=$ORIGINAL_NAME_NGINX
-      DIR_NAME=$DIR_NAME_NGINX
+      ORIGINAL_NAME=docker-nginx-proxy
+      DIR_NAME=nginx-proxy
+      ${DOCKER_NETWORKS:='nginx-proxy,internal'}
   else
       TEMPLATE_URL=$TEMPLATE_TRAEFIK_URL
-      ORIGINAL_NAME=$ORIGINAL_NAME_TRAEFIK
-      DIR_NAME=$DIR_NAME_TRAEFIK
+      ORIGINAL_NAME=docker-traefik-proxy
+      DIR_NAME=traefik-proxy
+      ${DOCKER_NETWORKS:='web,internal'}
 
-      TRAEFIK_CREDENTIALS=`htpasswd -nb admin $TRAEFIK_PASSWORD`
+      TRAEFIK_CREDENTIALS=$(htpasswd -nb admin $TRAEFIK_PASSWORD)
   fi
 
     FILE_ZIPED=${ORIGINAL_NAME}.zip
-    WORKDIR=${DEFAULT_WORKDIR}/apps/core
+    WORKDIR=${DEFAULT_WORKDIR}/apps
 
     if [ -d $WORKDIR ]; then
         setup_log "---> 🗑️  Deleting previous files from an unsuccessful previous attempt"
@@ -314,7 +311,7 @@ function setup_proxy() {
 
         if [[ ! -z $TRAEFIK_CREDENTIALS ]]; then
             OLD_TRAEFIK_CREDENTIALS="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
-            sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
+            sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" ${PROXY_FULL_PATH}/docker-compose.yml
             install_report "---> TRAEFIK_PASSWORD: $TRAEFIK_PASSWORD"
 
             if [[ ! -e ${PROXY_FULL_PATH}/acme.json ]]; then
@@ -335,8 +332,8 @@ function setup_proxy() {
         install_report "${PROXY_FULL_PATH}/docker-compose.yml"
 
         # Moves the app folder to the working directory root
-        if [[ ! -z $ADDITIONAL_APPS ]]; then
-            for APP in $(echo $ADDITIONAL_APPS | sed "s/,/ /g"); do
+        if [[ ! -z $APP_TEMPLATES ]]; then
+            for APP in $(echo $APP_TEMPLATES | sed "s/,/ /g"); do
                 if [ -d ${PROXY_FULL_PATH}/templates/${APP} ]; then
                     mv ${PROXY_FULL_PATH}/templates/${APP} ${WORKDIR}/${APP}
 
@@ -361,11 +358,11 @@ fi
 check_apache2
 
 # Update timezone
-setup_log "---> 🕒 Updating packages and setting the timezone"
+setup_log "---> 🕒 Updating packages and setting the timezone."
 apt-get update -qq >/dev/null
 timedatectl set-timezone $DEFAULT_TIMEZONE
 
-setup_log "---> 🟢 Installing essential programs (git zip unzip curl wget acl)"
+setup_log "---> 🟢 Installing essential programs (git zip unzip curl wget acl)."
 apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils
 
 if [ -x "$(command -v docker)" ]; then
@@ -506,7 +503,7 @@ curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
         "WORKDIR": "/home/$DEFAULT_USER",
         "DOCKER_NETWORKS": "$DOCKER_NETWORKS",
         "TEMPLATE": "$TEMPLATE",
-        "ADDITIONAL_APPS": "$ADDITIONAL_APPS",
+        "APP_TEMPLATES": "$APP_TEMPLATES",
         "YOUR_DOMAIN": "$YOUR_DOMAIN",
         "YOUR_EMAIL": "$YOUR_EMAIL",
 

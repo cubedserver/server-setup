@@ -26,8 +26,8 @@ Basic installation with TRAEFIK as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
 --docker-networks web,internal \
---template traefik \
---additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--proxy-template traefik \
+--app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
 ~~~
@@ -36,8 +36,8 @@ Basic installation with NGINX as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
 --docker-networks nginx-proxy,internal \
---template nginx \
---additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--proxy-template nginx \
+--app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
 ~~~
@@ -61,8 +61,8 @@ OPTIONS:
 --workdir                   Folder where all files of this setup will be stored
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
--b|--template            Proxy templates to be installed. Currently traefik and nginx are available
--a|--additional-apps        Additional applications that will be installed along with the proxy
+-b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
+-a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.com
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
