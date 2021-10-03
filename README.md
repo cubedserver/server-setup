@@ -64,7 +64,7 @@ OPTIONS:
 -b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
 -a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
-                            After everything is set up, you can access the services as follows: service.yourdomain.com
+                            After everything is set up, you can access the services as follows: service.yourdomain.local
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
 --ssh-passphrase            Provides a passphrase for the ssh key
 
