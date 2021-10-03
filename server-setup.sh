@@ -19,10 +19,10 @@ INSTALL_PROXY=true
 SSH_PASSPHRASE=
 DOCKER_COMPOSE_VERSION=1.29.2
 DEFAULT_USER=cubed
-ROOT_WORKDIR=/home/$DEFAULT_USER
+DEFAULT_WORKDIR=/home/$DEFAULT_USER
 WORKDIRS=apps,backups
 DOCKER_NETWORKS=nginx-proxy,internal
-BOILERPLATE=nginx
+TEMPLATE=nginx
 ADDITIONAL_APPS=mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer
 YOUR_DOMAIN=yourdomain.com
 YOUR_EMAIL=email@yourdomain.com
@@ -57,7 +57,7 @@ OPTIONS:
 --workdir                   Folder where all files of this setup will be stored
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
--b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
+-b|--template               Proxy templates to be installed. Currently traefik and nginx are available
 -a|--additional-apps        Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.com
@@ -121,7 +121,7 @@ case $key in
         ;;
 
     --workdir)
-        ROOT_WORKDIR="$2"
+        DEFAULT_WORKDIR="$2"
         shift 2
         ;;
 
@@ -135,8 +135,8 @@ case $key in
         shift 2
         ;;
 
-    -b|--boilerplate)
-        BOILERPLATE="$2"
+    -b|--template)
+        TEMPLATE="$2"
         shift 2
         ;;
 
@@ -241,14 +241,14 @@ function docker_reset() {
 
 function setup_proxy() {
 
-  BOILERPLATE=$1
+  TEMPLATE=$1
 
-  if [ $BOILERPLATE == "nginx" ]; then
-      BOILERPLATE_URL=$TEMPLATE_NGINX_URL
+  if [ $TEMPLATE == "nginx" ]; then
+      TEMPLATE_URL=$TEMPLATE_NGINX_URL
       ORIGINAL_NAME=$ORIGINAL_NAME_NGINX
       DIR_NAME=$DIR_NAME_NGINX
   else
-      BOILERPLATE_URL=$TEMPLATE_TRAEFIK_URL
+      TEMPLATE_URL=$TEMPLATE_TRAEFIK_URL
       ORIGINAL_NAME=$ORIGINAL_NAME_TRAEFIK
       DIR_NAME=$DIR_NAME_TRAEFIK
 
@@ -256,20 +256,20 @@ function setup_proxy() {
   fi
 
     FILE_ZIPED=${ORIGINAL_NAME}.zip
-    WORKDIR=${ROOT_WORKDIR}/apps/core
+    WORKDIR=${DEFAULT_WORKDIR}/apps/core
 
     if [ -d $WORKDIR ]; then
         setup_log "---> 🗑️  Deleting previous files from an unsuccessful previous attempt"
         rm -rf $WORKDIR
     fi
 
-    setup_log "---> 📂 Creating working directory ${WORKDIR} for the $BOILERPLATE Proxy"
+    setup_log "---> 📂 Creating working directory ${WORKDIR} for the $TEMPLATE Proxy"
     mkdir -p $WORKDIR
 
     PROXY_FULL_PATH=${WORKDIR}/${DIR_NAME}
     
-    setup_log "---> 📥 Downloading boilerplate ${BOILERPLATE}"
-    wget -q $BOILERPLATE_URL -O $FILE_ZIPED
+    setup_log "---> 📥 Downloading template ${TEMPLATE}"
+    wget -q $TEMPLATE_URL -O $FILE_ZIPED
 
     if [ ! -f $FILE_ZIPED ]; then
         setup_log "---> ❌ Failed to download proxy files. Skipping..."
@@ -456,7 +456,7 @@ fi
 
 for WORKDIR in $(echo $WORKDIRS | sed "s/,/ /g"); do
 
-  WORKDIR_FULL=${ROOT_WORKDIR}/$WORKDIR
+  WORKDIR_FULL=${DEFAULT_WORKDIR}/$WORKDIR
 
   if [ -d $WORKDIR_FULL ]; then
       setup_log "---> 🗑️  Deleting WORKDIR ${WORKDIR} from an unsuccessful previous attempt"
@@ -468,13 +468,11 @@ for WORKDIR in $(echo $WORKDIRS | sed "s/,/ /g"); do
 done
 
 if $INSTALL_PROXY ; then
-    setup_proxy $BOILERPLATE
+    setup_proxy $TEMPLATE
 fi
 
-
 setup_log "---> 🔁 Changing owner of the root working directory to $DEFAULT_USER"
-chown -R $DEFAULT_USER.$DEFAULT_USER ${ROOT_WORKDIR}
-
+chown -R $DEFAULT_USER.$DEFAULT_USER ${DEFAULT_WORKDIR}
 
 setup_log "---> 🧹 Cleaning up"
 apt-get autoremove -y
@@ -502,7 +500,7 @@ curl --max-time 15 --connect-timeout 60 --silent $WEBHOOK_URL \
 
         "WORKDIR": "/home/$DEFAULT_USER",
         "DOCKER_NETWORKS": "$DOCKER_NETWORKS",
-        "BOILERPLATE": "$BOILERPLATE",
+        "TEMPLATE": "$TEMPLATE",
         "ADDITIONAL_APPS": "$ADDITIONAL_APPS",
         "YOUR_DOMAIN": "$YOUR_DOMAIN",
         "YOUR_EMAIL": "$YOUR_EMAIL",

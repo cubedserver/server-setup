@@ -26,7 +26,7 @@ Basic installation with TRAEFIK as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
 --docker-networks web,internal \
---boilerplate traefik \
+--template traefik \
 --additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
@@ -36,7 +36,7 @@ Basic installation with NGINX as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
 --docker-networks nginx-proxy,internal \
---boilerplate nginx \
+--template nginx \
 --additional-apps mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
@@ -61,7 +61,7 @@ OPTIONS:
 --workdir                   Folder where all files of this setup will be stored
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 -n|--docker-networks        Docker networks to be created
--b|--boilerplate            Proxy templates to be installed. Currently traefik and nginx are available
+-b|--template            Proxy templates to be installed. Currently traefik and nginx are available
 -a|--additional-apps        Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.com
@@ -91,7 +91,7 @@ ssh-copy-id <USERNAME>@<SERVER IP>
 
 ### Reverse Proxy
 
-If you are looking for a boilerplate for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
+If you are looking for a template for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
 
  * [cubedserver/docker-traefik-proxy](https://github.com/cubedserver/docker-traefik-proxy)
 
