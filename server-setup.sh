@@ -311,6 +311,12 @@ function setup_proxy() {
             OLD_TRAEFIK_CREDENTIALS="admin:\$apr1\$hR1niB3v\$rrLbUoAuySzeBye3cRHYB.";
             sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" ${PROXY_FULL_PATH}/traefik_dynamic.toml
             install_report "---> TRAEFIK_PASSWORD: $TRAEFIK_PASSWORD"
+
+            if [[ ! -e ${PROXY_FULL_PATH}/acme.json ]]; then
+                touch ${PROXY_FULL_PATH}/acme.json
+            fi
+
+            chmod 600 ${PROXY_FULL_PATH}/acme.json
         fi
 
         for NETWORK_NAME in $(echo $DOCKER_NETWORKS | sed "s/,/ /g"); do
