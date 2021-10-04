@@ -22,21 +22,19 @@ To do the setup, download and run the script `server-setup.sh` or if you prefer 
 
 ## Installation
 
-Basic installation with TRAEFIK as default
+Basic installation with NGINX as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
---docker-networks web,internal \
---proxy-template traefik \
+--proxy-template nginx \
 --app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
 ~~~
 
-Basic installation with NGINX as default
+Basic installation with TRAEFIK as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
---docker-networks nginx-proxy,internal \
---proxy-template nginx \
+--proxy-template traefik \
 --app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
 --email email@example.com
@@ -60,13 +58,14 @@ OPTIONS:
 --default-user-password
 --workdir                   Folder where all files of this setup will be stored
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
--n|--docker-networks        Docker networks to be created
+--root-ssh-passphrase       Provides a passphrase for the ssh key
+--ssh-passphrase            Provides a passphrase for the ssh key
 -b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
 -a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.local
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
---ssh-passphrase            Provides a passphrase for the ssh key
+-f|--force                  Force install/re-install
 
 OPTIONS (Service Credentials):
 --mysql-password            MySQL root password
@@ -75,7 +74,7 @@ OPTIONS (Service Credentials):
 --traefik-password          Traefik admin password  
 
 OPTIONS (Webhook):
---webhook-url               Ping URL With Provisioning Updates
+--webhook-url               Ping URL with provisioning updates
 ~~~
 
 ## Important
