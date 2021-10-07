@@ -1,37 +1,127 @@
-## Welcome to GitHub Pages
+## Server Setup
 
-You can use the [editor on GitHub](https://github.com/cubedserver/server-setup/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+Script to make initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on servers in Digital Ocean, Linone, AWS EC2 or similar.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+Performs the following configuration steps:
 
-### Markdown
+* Definition of timezone
+* root user settings
+* Adds new default user for full privilege deploy
+* Install git, zip, unzip, curl, acl, docker and docker-compose
+* Adds github, gitlab and bitbucket to trusted hosts
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
+Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in similar distributions.
 
-```markdown
-Syntax highlighted code block
+## Installation
 
-# Header 1
-## Header 2
-### Header 3
+To do the setup, download and run the script `server-setup.sh` or if you prefer (proceed at your own risk), execute the instruction below.
 
-- Bulleted
-- List
+## Installation
 
-1. Numbered
-2. List
 
-**Bold** and _Italic_ and `Code` text
+Basic installation with Docker in Swarm mode
+~~~
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+--swarm-mode \
+--advertise-addr <Your Server IP Address> \
+~~~
 
-[Link](url) and ![Image](src)
+
+Basic installation with NGINX as default
+~~~
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+--proxy-template nginx \
+--app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--domain example.com \
+--email email@example.com
+~~~
+
+Basic installation with TRAEFIK as default
+~~~
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+--proxy-template traefik \
+--app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
+--domain example.com \
+--email email@example.com
+~~~
+
+## Command options
+
+You can get help by passing the `-h` option.
+
+~~~
+Script for initial configurations of Docker, Docker Swarm, Docker Compose and Reverse Proxy.
+USAGE:
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
+
+OPTIONS:
+-h|--help                   Print help
+-t|--timezone               Standard system timezone
+--docker-compose-version    Version of the docker compose to be installed
+--root-password             New root user password. The script forces the password update
+--default-user              Alternative user (with super powers) that will be used for deploys and remote access later
+--default-user-password
+--workdir                   Folder where all files of this setup will be stored
+--spaces                    Subfolders where applications will be allocated (eg. apps, backups)
+--root-ssh-passphrase       Provides a passphrase for the ssh key
+--ssh-passphrase            Provides a passphrase for the ssh key
+-f|--force                  Force install/re-install
+
+OPTIONS (Docker Swarm):
+-s|--swarm-mode             Run Docker Engine in swarm mode
+--advertise-addr            Advertised address (format: <ip|interface>[:port])
+
+OPTIONS (Proxy Settings):
+-b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
+-a|--app-templates          Additional applications that will be installed along with the proxy
+-d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
+                            After everything is set up, you can access the services as follows: service.yourdomain.local
+-e|--email                  Email that Let's Encrypt will use to generate SSL certificates
+
+OPTIONS (Service Credentials):
+--mysql-password            MySQL root password
+--postgres-password         PostgreSQL password
+--redis-password            Redis password
+--traefik-password          Traefik admin password  
+
+OPTIONS (Webhook):
+--webhook-url               Ping URL with provisioning updates
+~~~
+
+## Important
+In order for you to be able to deploy applications using git and some deployment tools such as the [deployer](https://deployer.org/), you will need to add the public key (id_rsa.pub) of the user created on your VCS server (bitbucket, gitlab, github, etc.).
+
+## Tips
+
+To not have to enter the password every time you need to access the remote server by SSH or have to do some deploy, type the command below. This will add your public key to the new user's ```authorized_keys``` file.
+
+```
+ssh-copy-id <USERNAME>@<SERVER IP>
 ```
 
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
+### Reverse Proxy
 
-### Jekyll Themes
+If you are looking for a template for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
 
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/cubedserver/server-setup/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
+ * [cubedserver/docker-traefik-proxy](https://github.com/cubedserver/docker-traefik-proxy)
 
-### Support or Contact
+ * [cubedserver/docker-nginx-proxy](https://github.com/cubedserver/docker-nginx-proxy)
 
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
+## Contributing
+
+1. Fork this repository!
+2. Create your feature from the **develop** branch: git checkout -b feature/my-new-feature
+3. Write and comment your code
+4. Commit your changes: `git commit -am 'Add some feature'`
+5. Push the branch: `git push origin feature/my-new-feature`
+6. Make a pull request to the branch **develop**
+
+## Credits
+
+* [Fábio Assunção](https://github.com/fabioassuncao)
+* [All Contributors](../../contributors)
+
+
+## License
+
+Licensed under the MIT License.
