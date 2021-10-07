@@ -18,7 +18,7 @@ ROOT_SSH_PASSPHRASE=
 : ${DOCKER_COMPOSE_VERSION:='1.29.2'}
 
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
-: ${WORKDIRS:='apps,backups'}
+: ${SPACES:='apps,backups'}
 : ${TEMPLATE:='nginx'}
 : ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 
@@ -35,17 +35,21 @@ ROOT_SSH_PASSPHRASE=
 : ${TRAEFIK_PASSWORD:=$(openssl rand -hex 8)}
 
 : ${FORCE_INSTALL:=false}
+: ${SWARM_MODE:=false}
+: ${IP_ADRESS:=$(curl checkip.amazonaws.com)}
+
+: ${INSTALL_PROXY:=false}
 
 WEBHOOK_URL=
 
 usage() {
     set +x
     cat 1>&2 <<HERE
-Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
+Script for initial configurations of Docker, Docker Swarm, Docker Compose and Reverse Proxy.
 USAGE:
     wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
-OPTIONS:
 
+OPTIONS:
 -h|--help                   Print help
 -t|--timezone               Standard system timezone
 --docker-compose-version    Version of the docker compose to be installed
@@ -56,12 +60,18 @@ OPTIONS:
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 --root-ssh-passphrase       Provides a passphrase for the ssh key
 --ssh-passphrase            Provides a passphrase for the ssh key
+-f|--force                  Force install/re-install
+
+OPTIONS (Docker Swarm):
+-s|--swarm-mode             Run Docker Engine in swarm mode
+--advertise-addr            Advertised address (format: <ip|interface>[:port])
+
+OPTIONS (Proxy Settings):
 -b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
 -a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.local
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
--f|--force                  Force install/re-install
 
 OPTIONS (Service Credentials):
 --mysql-password            MySQL root password
@@ -89,8 +99,18 @@ while [[ $# -gt 0 ]]; do
         shift 1
         ;;
 
+    -s | --swarm-mode)
+        SWARM_MODE=true
+        shift 1
+        ;;
+
     --root-ssh-passphrase)
         ROOT_SSH_PASSPHRASE="$2"
+        shift 2
+        ;;
+
+    --advertise-addr)
+        IP_ADRESS="$2"
         shift 2
         ;;
 
@@ -119,7 +139,7 @@ while [[ $# -gt 0 ]]; do
         ;;
 
     --ssh-passphrase)
-        SSH_PASSPHRASE="$2"
+        USER_SSH_PASSPHRASE="$2"
         shift 2
         ;;
 
@@ -129,12 +149,13 @@ while [[ $# -gt 0 ]]; do
         ;;
 
     --spaces)
-        WORKDIRS="$2"
+        SPACES="$2"
         shift 2
         ;;
 
     -b | --proxy-template)
         TEMPLATE="$2"
+        INSTALL_PROXY=true
         shift 2
         ;;
 
@@ -411,6 +432,13 @@ if [ -x "$(command -v docker)" ]; then
 else
     setup_log "---> 🐳 Installing docker"
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
+
+    if $SWARM_MODE; then
+        setup_log "---> 🔄 Starting Swarm Mode"
+        SWARM_LOG=`docker swarm init --advertise-addr $IP_ADRESS`
+        SWARM_TOKEN_MANAGER=`docker swarm join-token manager`
+        SWARM_TOKEN_WORKER=`docker swarm join-token worker`
+    fi
 fi
 
 if [ ! -f /usr/local/bin/docker-compose ]; then
@@ -494,7 +522,7 @@ else
     cp /root/.ssh/authorized_keys $DEFAULT_WORKDIR/.ssh/authorized_keys
 
     setup_log "---> 🔑 Creating the $DEFAULT_USER user's SSH Keys"
-    ssh_keygen "$DEFAULT_USER" "$SSH_PASSPHRASE" "$DEFAULT_WORKDIR/.ssh/id_rsa"
+    ssh_keygen "$DEFAULT_USER" "$USER_SSH_PASSPHRASE" "$DEFAULT_WORKDIR/.ssh/id_rsa"
 
     chown -R $DEFAULT_USER.$DEFAULT_USER $DEFAULT_WORKDIR/.ssh
 
@@ -509,22 +537,24 @@ else
     usermod -aG www-data $DEFAULT_USER
 fi
 
-for WORKDIR in $(echo $WORKDIRS | sed "s/,/ /g"); do
-    if [ -d "$DEFAULT_WORKDIR/$WORKDIR" ]; then
+for SPACE in $(echo $SPACES | sed "s/,/ /g"); do
+    if [ -d "$DEFAULT_WORKDIR/$SPACE" ]; then
 
         if $FORCE_INSTALL; then
-            setup_log "---> 🔥 Deleting WORKDIR $WORKDIR from an previous attempt"
-            rm -rf "$DEFAULT_WORKDIR/$WORKDIR/*"
+            setup_log "---> 🔥 Deleting WORKDIR $SPACE from an previous attempt"
+            rm -rf "$DEFAULT_WORKDIR/$SPACE/*"
         else
-            setup_log "---> 📂 Skipping files from previous installation: $DEFAULT_WORKDIR/$WORKDIR"
+            setup_log "---> 📂 Skipping files from previous installation: $DEFAULT_WORKDIR/$SPACE"
         fi
     else
-        setup_log "---> 📂 Creating working directory: $DEFAULT_WORKDIR/$WORKDIR"
-        mkdir -p "$DEFAULT_WORKDIR/$WORKDIR"
+        setup_log "---> 📂 Creating working directory: $DEFAULT_WORKDIR/$SPACE"
+        mkdir -p "$DEFAULT_WORKDIR/$SPACE"
     fi
 done
 
-setup_proxy $TEMPLATE
+if $INSTALL_PROXY; then
+    setup_proxy $TEMPLATE
+fi
 
 setup_log "---> 🧹 Cleaning up"
 apt-get autoremove -y
@@ -545,7 +575,7 @@ if [[ ! -z $WEBHOOK_URL ]]; then
         "status": "FINISHED",
         "data": {
             "ROOT_SSH_PASSPHRASE": "$ROOT_SSH_PASSPHRASE",
-            "SSH_PASSPHRASE": "$SSH_PASSPHRASE",
+            "USER_SSH_PASSPHRASE": "$USER_SSH_PASSPHRASE",
             "DEFAULT_TIMEZONE": "$DEFAULT_TIMEZONE",
             "DOCKER_COMPOSE_VERSION": "$DOCKER_COMPOSE_VERSION",
             "ROOT_PASSWORD": "$ROOT_PASSWORD",
@@ -558,6 +588,13 @@ if [[ ! -z $WEBHOOK_URL ]]; then
             "APP_TEMPLATES": "$APP_TEMPLATES",
             "YOUR_DOMAIN": "$YOUR_DOMAIN",
             "YOUR_EMAIL": "$YOUR_EMAIL",
+
+            "SWARM_MODE": "$SWARM_MODE",
+            "SWARM_LOG":  "$SWARM_LOG",            
+            "SWARM_TOKEN_MANAGER": "$SWARM_TOKEN_MANAGER",
+            "SWARM_TOKEN_WORKER": "$SWARM_TOKEN_WORKER",
+
+            "IP_ADRESS": "$IP_ADRESS",
 
             "MYSQL_PASSWORD": "$MYSQL_PASSWORD",
             "POSTGRES_PASSWORD": "$POSTGRES_PASSWORD",

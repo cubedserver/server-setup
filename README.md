@@ -22,6 +22,15 @@ To do the setup, download and run the script `server-setup.sh` or if you prefer 
 
 ## Installation
 
+
+Basic installation with Docker in Swarm mode
+~~~
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+--swarm-mode \
+--advertise-addr <Your Server IP Address> \
+~~~
+
+
 Basic installation with NGINX as default
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
@@ -45,11 +54,11 @@ wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/serv
 You can get help by passing the `-h` option.
 
 ~~~
-Script for initial configurations of Docker, Docker Compose and Reverse Proxy.
+Script for initial configurations of Docker, Docker Swarm, Docker Compose and Reverse Proxy.
 USAGE:
     wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
-OPTIONS:
 
+OPTIONS:
 -h|--help                   Print help
 -t|--timezone               Standard system timezone
 --docker-compose-version    Version of the docker compose to be installed
@@ -60,12 +69,18 @@ OPTIONS:
 --spaces                    Subfolders where applications will be allocated (eg. apps, backups)
 --root-ssh-passphrase       Provides a passphrase for the ssh key
 --ssh-passphrase            Provides a passphrase for the ssh key
+-f|--force                  Force install/re-install
+
+OPTIONS (Docker Swarm):
+-s|--swarm-mode             Run Docker Engine in swarm mode
+--advertise-addr            Advertised address (format: <ip|interface>[:port])
+
+OPTIONS (Proxy Settings):
 -b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
 -a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.local
 -e|--email                  Email that Let's Encrypt will use to generate SSL certificates
--f|--force                  Force install/re-install
 
 OPTIONS (Service Credentials):
 --mysql-password            MySQL root password
