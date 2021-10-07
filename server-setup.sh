@@ -281,6 +281,21 @@ function docker_reset() {
 
 }
 
+function configure_firewall() {
+    # 80 TCP for regular HTTP connections
+    # 443 TCP for secure HTTPS connections
+    # 7946 TCP/UDP for Container Network Discovery
+    # 4789 TCP/UDP for Container Overlay Network
+    # 2377 TCP/UDP for Docker swarm API
+    # 996 TCP for secure HTTPS connections specific to Docker Registry
+
+    setup_log "---> 🔄 Configuring Firewall"
+    ufw allow 80,443,996,7946,4789,2377/tcp
+    ufw allow 7946,4789,2377/udp
+
+}
+
+
 function docker_compose_install() {
     setup_log "---> 📦 Installing docker-compose"
     curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
@@ -418,6 +433,8 @@ if [ -f /var/.server-setup/installed ]; then
 fi
 
 check_apache2
+
+configure_firewall
 
 # Update timezone
 setup_log "---> 🔄 Updating packages and setting the timezone."
