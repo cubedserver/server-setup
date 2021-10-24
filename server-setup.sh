@@ -9,8 +9,8 @@ EXAMPLE_EMAIL=email@yourdomain.local
 ROOT_SSH_PASSPHRASE=
 
 # Defaults
-: ${TEMPLATE_NGINX_URL:='https://github.com/cubedserver/docker-nginx-proxy/archive/master.zip'}
-: ${TEMPLATE_TRAEFIK_URL:='https://github.com/cubedserver/docker-traefik-proxy/archive/master.zip'}
+: ${TEMPLATE_NGINX_URL:='https://github.com/cubedserver/docker-nginx-proxy/archive/main.zip'}
+: ${TEMPLATE_TRAEFIK_URL:='https://github.com/cubedserver/docker-traefik-proxy/archive/main.zip'}
 
 : ${YOUR_DOMAIN:='yourdomain.local'}
 : ${YOUR_EMAIL:='email@yourdomain.local'}
@@ -47,7 +47,7 @@ usage() {
     cat 1>&2 <<HERE
 Script for initial configurations of Docker, Docker Swarm, Docker Compose and Reverse Proxy.
 USAGE:
-    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- [OPTIONS]
 
 OPTIONS:
 -h|--help                   Print help
@@ -343,7 +343,7 @@ function setup_proxy() {
         setup_log "---> ❌ Failed to download proxy files. Skipping..."
     else
         setup_log "---> 🗃️ Extracting files from $FILE_ZIPED"
-        unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv "$ORIGINAL_NAME-master" $PROXY_FULL_PATH
+        unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv "$ORIGINAL_NAME-main" $PROXY_FULL_PATH
 
         if [[ ! -z $YOUR_EMAIL ]]; then
             setup_log "---> 📧 Overriding $EXAMPLE_EMAIL to $YOUR_EMAIL email from configuration files"

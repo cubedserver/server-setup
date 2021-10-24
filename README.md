@@ -25,7 +25,7 @@ To do the setup, download and run the script `server-setup.sh` or if you prefer 
 
 Basic installation with Docker in Swarm mode
 ~~~
-wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- \
 --swarm-mode \
 --advertise-addr <Your Server IP Address> \
 ~~~
@@ -33,7 +33,7 @@ wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/serv
 
 Basic installation with NGINX as default
 ~~~
-wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- \
 --proxy-template nginx \
 --app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
@@ -42,7 +42,7 @@ wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/serv
 
 Basic installation with TRAEFIK as default
 ~~~
-wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- \
+wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- \
 --proxy-template traefik \
 --app-templates mysql,postgres,redis,whoami,adminer,phpmyadmin,portainer \
 --domain example.com \
@@ -56,7 +56,7 @@ You can get help by passing the `-h` option.
 ~~~
 Script for initial configurations of Docker, Docker Swarm, Docker Compose and Reverse Proxy.
 USAGE:
-    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/master/server-setup.sh | bash -s -- [OPTIONS]
+    wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- [OPTIONS]
 
 OPTIONS:
 -h|--help                   Print help
