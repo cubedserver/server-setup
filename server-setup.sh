@@ -290,7 +290,7 @@ function configure_firewall() {
     # 996 TCP for secure HTTPS connections specific to Docker Registry
 
     setup_log "---> 🔄 Configuring Firewall"
-    ufw allow 80,443,996,7946,4789,2377/tcp
+    ufw allow 80,443,996,7946,4789,2377,2049/tcp
     ufw allow 7946,4789,2377/udp
 
 }
@@ -441,8 +441,8 @@ setup_log "---> 🔄 Updating packages and setting the timezone."
 apt-get update -qq >/dev/null
 timedatectl set-timezone $DEFAULT_TIMEZONE
 
-setup_log "---> 🔄 Installing essential programs (git zip unzip curl wget acl apache2-utils)."
-apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils
+setup_log "---> 🔄 Installing essential programs (git zip unzip curl wget acl apache2-utils nfs-common)."
+apt-get install -y -qq --no-install-recommends git zip unzip curl wget acl apache2-utils nfs-common
 
 if [ -x "$(command -v docker)" ]; then
     docker_reset
@@ -453,8 +453,8 @@ else
     if $SWARM_MODE; then
         setup_log "---> 🔄 Starting Swarm Mode"
         SWARM_LOG=`docker swarm init --advertise-addr $IP_ADRESS`
-        SWARM_TOKEN_MANAGER=`docker swarm join-token manager`
-        SWARM_TOKEN_WORKER=`docker swarm join-token worker`
+        SWARM_TOKEN_MANAGER=`docker swarm join-token manager -q`
+        SWARM_TOKEN_WORKER=`docker swarm join-token worker -q`
     fi
 fi
 

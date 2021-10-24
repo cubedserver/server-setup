@@ -27,7 +27,7 @@ Basic installation with Docker in Swarm mode
 ~~~
 wget -qO- https://raw.githubusercontent.com/cubedserver/server-setup/main/server-setup.sh | bash -s -- \
 --swarm-mode \
---advertise-addr <Your Server IP Address> \
+--advertise-addr <Your Server IP Address>
 ~~~
 
 
