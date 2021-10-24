@@ -36,6 +36,7 @@ ROOT_SSH_PASSPHRASE=
 
 : ${FORCE_INSTALL:=false}
 : ${SWARM_MODE:=false}
+: ${TEMPLATE_TYPE:='docker-standalone'}
 : ${IP_ADRESS:=$(curl checkip.amazonaws.com)}
 
 : ${INSTALL_PROXY:=false}
@@ -101,6 +102,7 @@ while [[ $# -gt 0 ]]; do
 
     -s | --swarm-mode)
         SWARM_MODE=true
+        TEMPLATE_TYPE='docker-swarm'
         shift 1
         ;;
 
@@ -359,21 +361,21 @@ function setup_proxy() {
 
         # Update service credentials
 
-        if [[ ! -z $MYSQL_PASSWORD && -e $PROXY_FULL_PATH/templates/mysql/docker-compose.yml ]]; then
+        if [[ ! -z $MYSQL_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/mysql/docker-compose.yml ]]; then
             setup_log "---> 🔄 Updating MySQL password"
-            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/templates/mysql/docker-compose.yml
+            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/mysql/docker-compose.yml
             install_report "---> MYSQL_PASSWORD: $MYSQL_PASSWORD"
         fi
 
-        if [[ ! -z $POSTGRES_PASSWORD && -e $PROXY_FULL_PATH/templates/templates/docker-compose.yml ]]; then
+        if [[ ! -z $POSTGRES_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/postgres/docker-compose.yml ]]; then
             setup_log "---> 🔄 Updating PostgreSQL password"
-            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/templates/postgres/docker-compose.yml
+            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/postgres/docker-compose.yml
             install_report "---> POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
         fi
 
-        if [[ ! -z $REDIS_PASSWORD && -e $PROXY_FULL_PATH/templates/redis/docker-compose.yml ]]; then
+        if [[ ! -z $REDIS_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/redis/docker-compose.yml ]]; then
             setup_log "---> 🔄 Updating Redis password"
-            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/templates/redis/docker-compose.yml
+            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/redis/docker-compose.yml
             install_report "---> REDIS_PASSWORD: $REDIS_PASSWORD"
         fi
 
@@ -396,8 +398,13 @@ function setup_proxy() {
             create_docker_network $NETWORK_NAME
         done
 
-        setup_log "---> ⚡ Starting reverse proxy containers"
-        docker-compose -f "$PROXY_FULL_PATH/docker-compose.yml" up -d
+        if $SWARM_MODE; then
+            setup_log "---> ⚡ Deploying the stack to the swarm"
+            docker stack deploy --compose-file "$PROXY_FULL_PATH/docker-stack.yml" $TEMPLATE
+        else
+            setup_log "---> ⚡ Starting reverse proxy containers"
+            docker-compose -f "$PROXY_FULL_PATH/docker-compose.yml" up -d
+        fi
 
         install_report "Services started"
         install_report "$PROXY_FULL_PATH/docker-compose.yml"
@@ -405,11 +412,17 @@ function setup_proxy() {
         # Moves the app folder to the working directory root
         if [[ ! -z $APP_TEMPLATES ]]; then
             for APP in $(echo $APP_TEMPLATES | sed "s/,/ /g"); do
-                if [ -d "$PROXY_FULL_PATH/templates/$APP" ]; then
-                    mv "$PROXY_FULL_PATH/templates/$APP" "$DEFAULT_WORKDIR/apps/$APP"
+                if [ -d "$PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/$APP" ]; then
+                    mv "$PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/$APP" "$DEFAULT_WORKDIR/apps/$APP"
 
-                    setup_log "---> ⚡ Starting $APP container"
-                    docker-compose -f "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" up -d
+                    if $SWARM_MODE; then
+                        setup_log "---> ⚡ Deploying $APP stack"
+                        docker stack deploy --compose-file "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" $APP
+                    else
+                        setup_log "---> ⚡ Starting $APP container"
+                        docker-compose -f "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" up -d
+                    fi
+
                     install_report "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml"
                 else
                     setup_log "---> ❌ App $APP files not found. Skipping..."
