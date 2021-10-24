@@ -649,3 +649,6 @@ echo $FINISHED_ON >/var/.server-setup/installed
 
 echo -e "📈 Install Report: /var/.server-setup/install-report.txt"
 cat /var/.server-setup/install-report.txt
+
+su $DEFAULT_USER
+cd $DEFAULT_WORKDIR
