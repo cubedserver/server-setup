@@ -14,7 +14,7 @@ Performs the following configuration steps:
 * Install git, zip, unzip, curl, acl, docker and docker-compose
 * Adds github, gitlab and bitbucket to trusted hosts
 
-Tested on a VPS running Ubuntu Server 20.04 LTS with 4GB RAM, but can be used in similar distributions.
+Tested on a VPS running Ubuntu Server 22.04 LTS with 4GB RAM, but can be used in similar distributions.
 
 ## Installation
 
