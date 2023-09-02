@@ -231,11 +231,11 @@ function error() {
 }
 
 function install_report() {
-    if [ ! -d /var/.server-setup ]; then
-        mkdir -p /var/.server-setup
+    if [ ! -d /root/server-setup ]; then
+        mkdir -p /root/server-setup
     fi
 
-    echo $* >>/var/.server-setup/install-report.txt
+    echo $* >>/root/server-setup/install-report.txt
 }
 
 function create_docker_network() {
@@ -426,12 +426,12 @@ if [ "$(id -u)" != "0" ]; then
     error "❌ Sorry! This script must be run as root."
 fi
 
-if [ -f /var/.server-setup/installed ]; then
+if [ -f /root/server-setup/installed ]; then
 
     if $FORCE_INSTALL; then
-        rm -rf /var/.server-setup
+        rm -rf /root/server-setup
     else
-        error "❌ This server has already been configured. See /var/.server-setup/install-report.txt for details."
+        error "❌ This server has already been configured. See /root/server-setup/install-report.txt for details."
     fi
 fi
 
@@ -619,10 +619,10 @@ FINISHED_ON=$(TZ=$DEFAULT_TIMEZONE date)
 install_report "Started in: $STARTED_IN"
 install_report "Finished in: $FINISHED_ON"
 
-echo $FINISHED_ON >/var/.server-setup/installed
+echo $FINISHED_ON >/root/server-setup/installed
 
-echo -e "📈 Install Report: /var/.server-setup/install-report.txt"
-cat /var/.server-setup/install-report.txt
+echo -e "📈 Install Report: /root/server-setup/install-report.txt"
+cat /root/server-setup/install-report.txt
 
 su $DEFAULT_USER
 cd $DEFAULT_WORKDIR
