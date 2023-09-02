@@ -278,19 +278,19 @@ function setup_proxy() {
     FILE_ZIPED="$ORIGINAL_NAME.zip"
     WORKDIR="$DEFAULT_WORKDIR/apps"
 
-    if [ -d "$DEFAULT_WORKDIR/apps" ]; then
+    if [ -d "$WORKDIR" ]; then
         if $FORCE_INSTALL; then
             setup_log "---> 🔥 Deleting previous files from an unsuccessful previous attempt"
-            rm -rf "$DEFAULT_WORKDIR/apps/*"
+            rm -rf "$WORKDIR/*"
         else
-            setup_log "---> 📂 Skipping existing $DEFAULT_WORKDIR/apps working directory for traefik-proxy proxy"
+            setup_log "---> 📂 Skipping existing $WORKDIR working directory for traefik-proxy proxy"
         fi
     else
-        setup_log "---> 📂 Creating working directory $DEFAULT_WORKDIR/apps for the traefik-proxy Proxy"
-        mkdir -p "$DEFAULT_WORKDIR/apps"
+        setup_log "---> 📂 Creating working directory $WORKDIR for the traefik-proxy Proxy"
+        mkdir -p "$WORKDIR"
     fi
 
-    PROXY_FULL_PATH="$DEFAULT_WORKDIR/apps/$DIR_NAME"
+    PROXY_FULL_PATH="$WORKDIR/$DIR_NAME"
 
     setup_log "---> 📥 Downloading template traefik-proxy"
     wget -q $TEMPLATE_URL -O $FILE_ZIPED
@@ -371,12 +371,12 @@ function setup_proxy() {
         if [[ ! -z $APP_TEMPLATES ]]; then
             for APP in $(echo $APP_TEMPLATES | sed "s/,/ /g"); do
                 if [ -d "$PROXY_FULL_PATH/templates/$APP" ]; then
-                    mv "$PROXY_FULL_PATH/templates/$APP" "$DEFAULT_WORKDIR/apps/$APP"
+                    mv "$PROXY_FULL_PATH/templates/$APP" "$WORKDIR/$APP"
 
                     setup_log "---> ⚡ Deploying $APP stack"
-                    docker stack deploy --compose-file "$DEFAULT_WORKDIR/apps/$APP/docker-stack.yml" $APP
+                    docker stack deploy --compose-file "$WORKDIR/$APP/docker-stack.yml" $APP
 
-                    install_report "$DEFAULT_WORKDIR/apps/$APP/docker-stack.yml"
+                    install_report "$WORKDIR/$APP/docker-stack.yml"
                 else
                     setup_log "---> ❌ App $APP files not found. Skipping..."
                 fi
