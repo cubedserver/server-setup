@@ -3,13 +3,15 @@ version: "3.7"
 services:
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    restart: always
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.phpmyadmin.rule=Host(`phpmyadmin.yourdomain.local`)"
       - "traefik.http.routers.phpmyadmin.tls=true"
       - "traefik.http.routers.phpmyadmin.tls.certresolver=lets-encrypt"
       - "traefik.port=80"
+    deploy:
+      restart_policy:
+        condition: any
     networks:
       - internal
       - web

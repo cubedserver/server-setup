@@ -3,7 +3,6 @@ version: "3.7"
 services:
   postgres:
     image: postgres:10
-    restart: always
     environment:
       - POSTGRES_PASSWORD=your_secure_password
       - POSTGRES_USER=postgres
@@ -13,6 +12,9 @@ services:
       - "5432:5432"
     networks:
       - internal
+    deploy:
+      restart_policy:
+        condition: any
     labels:
       - "traefik.enable=false"
 
