@@ -330,6 +330,11 @@ function setup_proxy() {
         setup_log "---> ❌ Failed to download proxy files. Skipping..."
     else
         setup_log "---> 🗃️ Extracting files from $FILE_ZIPED"
+        if [ -d $PROXY_FULL_PATH ]; then
+            setup_log "---> 📂 Destination folder already exists. Removing existing folder."
+            rm -rf $PROXY_FULL_PATH
+        fi
+
         unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv "$ORIGINAL_NAME-main" $PROXY_FULL_PATH
 
         if [[ ! -z $YOUR_EMAIL ]]; then
