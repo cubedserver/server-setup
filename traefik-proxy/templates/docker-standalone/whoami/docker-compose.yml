@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  whoami:
+    image: "traefik/whoami"
+    container_name: whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.yourdomain.local`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.port=80"
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

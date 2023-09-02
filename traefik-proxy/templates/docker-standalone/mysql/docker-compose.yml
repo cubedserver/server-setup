@@ -1,0 +1,24 @@
+version: "3.3"
+
+services:
+  mysql:
+    image: 'mysql:5.7'
+    container_name: mysql
+    restart: always
+    ports:
+      - '3306:3306'
+    environment:
+      - MYSQL_ROOT_PASSWORD=your_secure_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+
+networks:
+  internal:
+    external: false
+
+volumes:
+  mysql-data:

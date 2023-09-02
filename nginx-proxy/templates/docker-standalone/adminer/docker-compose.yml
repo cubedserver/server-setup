@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+
+  adminer:
+    image: adminer:latest
+    container_name: adminer
+    environment:
+      - VIRTUAL_HOST=adminer.yourdomain.local
+      - VIRTUAL_PORT=8080
+      - LETSENCRYPT_HOST=adminer.yourdomain.local
+      - LETSENCRYPT_EMAIL=email@yourdomain.local
+    expose:
+      - "8080"
+
+networks:
+  default:
+    external:
+      name: nginx-proxy

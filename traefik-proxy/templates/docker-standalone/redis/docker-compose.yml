@@ -1,0 +1,25 @@
+version: "3.3"
+
+services:
+  redis:
+    image: redis:latest
+    container_name: redis
+    restart: always
+    command: --appendonly yes --requirepass your_secure_password
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PORT=6379
+    networks:
+      - internal
+    labels:
+      - "traefik.enable=false"
+
+networks:
+  internal:
+    external: false
+
+volumes:
+  redis-data:

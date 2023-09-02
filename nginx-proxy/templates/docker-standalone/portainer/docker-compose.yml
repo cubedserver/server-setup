@@ -1,0 +1,28 @@
+version: "3.3"
+
+services:
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    volumes:
+      - portainer-data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - VIRTUAL_HOST=portainer.yourdomain.local
+      - VIRTUAL_PORT=9000
+      - LETSENCRYPT_HOST=portainer.yourdomain.local
+      - LETSENCRYPT_EMAIL=email@yourdomain.local
+    expose:
+      - "9000"
+    ports:
+      - "9000:9000"
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
+
+volumes:
+  portainer-data:

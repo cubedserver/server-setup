@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  adminer:
+    image: adminer:latest
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.adminer.rule=Host(`adminer.yourdomain.local`)"
+      - "traefik.http.routers.adminer.tls=true"
+      - "traefik.http.routers.adminer.tls.certresolver=lets-encrypt"
+      - "traefik.port=8080"
+    networks:
+      - internal
+      - web
+
+networks:
+  web:
+    external: true
+  internal:
+    external: false

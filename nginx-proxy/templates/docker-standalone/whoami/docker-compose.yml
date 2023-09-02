@@ -1,0 +1,19 @@
+version: "3"
+
+services:
+
+  whoami:
+    image: jwilder/whoami
+    container_name: whoami
+    environment:
+      - VIRTUAL_HOST=whoami.yourdomain.local
+      - VIRTUAL_PORT=8000
+      - LETSENCRYPT_HOST=whoami.yourdomain.local
+      - LETSENCRYPT_EMAIL=email@yourdomain.local
+    expose:
+      - "8000"
+
+networks:
+  default:
+    external:
+      name: nginx-proxy
