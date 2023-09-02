@@ -4,7 +4,6 @@ services:
 
   postgres:
     image: postgres:10
-    container_name: postgres
     restart: always
     environment:
       - POSTGRES_PASSWORD=your_secure_password
@@ -17,9 +16,8 @@ services:
       - default
 
 networks:
-  default:
-    external:
-      name: nginx-proxy
+  nginx-proxy:
+    external: true
 
 volumes:
   postgres-data:

@@ -4,7 +4,6 @@ services:
 
   redis:
     image: redis:latest
-    container_name: redis
     restart: always
     command: --appendonly yes --requirepass your_secure_password
     volumes:
@@ -17,9 +16,8 @@ services:
       - default
 
 networks:
-  default:
-    external:
-      name: nginx-proxy
+  nginx-proxy:
+    external: true
 
 volumes:
   redis-data:

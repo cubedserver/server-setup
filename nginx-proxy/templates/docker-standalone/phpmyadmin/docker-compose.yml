@@ -4,7 +4,6 @@ services:
 
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
-    container_name: phpmyadmin
     restart: always
     environment:
       - PMA_ARBITRARY=1
@@ -16,6 +15,5 @@ services:
       - "80"
 
 networks:
-  default:
-    external:
-      name: nginx-proxy
+  nginx-proxy:
+    external: true

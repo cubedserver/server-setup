@@ -4,7 +4,6 @@ services:
 
   whoami:
     image: jwilder/whoami
-    container_name: whoami
     environment:
       - VIRTUAL_HOST=whoami.yourdomain.local
       - VIRTUAL_PORT=8000
@@ -14,6 +13,5 @@ services:
       - "8000"
 
 networks:
-  default:
-    external:
-      name: nginx-proxy
+  nginx-proxy:
+    external: true
