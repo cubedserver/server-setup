@@ -17,7 +17,6 @@ ROOT_SSH_PASSPHRASE=
 
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
 : ${SPACES:='apps,backups'}
-: ${TEMPLATE:='nginx'}
 : ${DOCKER_NETWORKS:='web,internal'}
 : ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 
@@ -34,11 +33,7 @@ ROOT_SSH_PASSPHRASE=
 : ${TRAEFIK_PASSWORD:=$(openssl rand -hex 8)}
 
 : ${FORCE_INSTALL:=false}
-: ${SWARM_MODE:=false}
-: ${TEMPLATE_TYPE:='docker-standalone'}
 : ${IP_ADRESS:=$(curl checkip.amazonaws.com)}
-
-: ${INSTALL_PROXY:=false}
 
 WEBHOOK_URL=
 
@@ -62,11 +57,9 @@ OPTIONS:
 -f|--force                  Force install/re-install
 
 OPTIONS (Docker Swarm):
--s|--swarm-mode             Run Docker Engine in swarm mode
 --advertise-addr            Advertised address (format: <ip|interface>[:port])
 
 OPTIONS (Proxy Settings):
--b|--proxy-template         Proxy templates to be installed. Currently traefik and nginx are available
 -a|--app-templates          Additional applications that will be installed along with the proxy
 -d|--domain                 If you have configured your DNS and pointed A records to this host, this will be the domain used to access the services
                             After everything is set up, you can access the services as follows: service.yourdomain.local
@@ -95,12 +88,6 @@ while [[ $# -gt 0 ]]; do
 
     -f | --force)
         FORCE_INSTALL=true
-        shift 1
-        ;;
-
-    -s | --swarm-mode)
-        SWARM_MODE=true
-        TEMPLATE_TYPE='docker-swarm'
         shift 1
         ;;
 
@@ -145,12 +132,6 @@ while [[ $# -gt 0 ]]; do
 
     --spaces)
         SPACES="$2"
-        shift 2
-        ;;
-
-    -b | --proxy-template)
-        TEMPLATE="$2"
-        INSTALL_PROXY=true
         shift 2
         ;;
 
@@ -242,11 +223,7 @@ function install_report() {
 function create_docker_network() {
     NETWORK_NAME=$1
     setup_log "---> ⚡ Creating Docker network $NETWORK_NAME"
-    if $SWARM_MODE; then
-        docker network ls | grep $NETWORK_NAME >/dev/null || docker network create --driver=overlay $NETWORK_NAME
-    else
-        docker network ls | grep $NETWORK_NAME >/dev/null || docker network create $NETWORK_NAME
-    fi
+    docker network ls | grep $NETWORK_NAME >/dev/null || docker network create --driver=overlay $NETWORK_NAME
 }
 
 function ssh_keygen() {
@@ -295,14 +272,8 @@ function configure_firewall() {
 }
 
 function setup_proxy() {
-    TEMPLATE=$1
-
-    if [ $TEMPLATE == "nginx" ]; then
-        DIR_NAME=nginx-proxy
-    else
-        DIR_NAME=traefik-proxy
-        TRAEFIK_CREDENTIALS=$(htpasswd -nbB admin "$TRAEFIK_PASSWORD" | sed -e s/\\$/\\$\\$/g)
-    fi
+    DIR_NAME=traefik-proxy
+    TRAEFIK_CREDENTIALS=$(htpasswd -nbB admin "$TRAEFIK_PASSWORD" | sed -e s/\\$/\\$\\$/g)
 
     FILE_ZIPED="$ORIGINAL_NAME.zip"
     WORKDIR="$DEFAULT_WORKDIR/apps"
@@ -312,16 +283,16 @@ function setup_proxy() {
             setup_log "---> 🔥 Deleting previous files from an unsuccessful previous attempt"
             rm -rf "$DEFAULT_WORKDIR/apps/*"
         else
-            setup_log "---> 📂 Skipping existing $DEFAULT_WORKDIR/apps working directory for $TEMPLATE proxy"
+            setup_log "---> 📂 Skipping existing $DEFAULT_WORKDIR/apps working directory for traefik-proxy proxy"
         fi
     else
-        setup_log "---> 📂 Creating working directory $DEFAULT_WORKDIR/apps for the $TEMPLATE Proxy"
+        setup_log "---> 📂 Creating working directory $DEFAULT_WORKDIR/apps for the traefik-proxy Proxy"
         mkdir -p "$DEFAULT_WORKDIR/apps"
     fi
 
     PROXY_FULL_PATH="$DEFAULT_WORKDIR/apps/$DIR_NAME"
 
-    setup_log "---> 📥 Downloading template $TEMPLATE"
+    setup_log "---> 📥 Downloading template traefik-proxy"
     wget -q $TEMPLATE_URL -O $FILE_ZIPED
 
     if [ ! -f $FILE_ZIPED ]; then
@@ -353,29 +324,29 @@ function setup_proxy() {
 
         # Update service credentials
 
-        if [[ ! -z $MYSQL_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/mysql/docker-compose.yml ]]; then
+        if [[ ! -z $MYSQL_PASSWORD && -e $PROXY_FULL_PATH/templates/mysql/docker-stack.yml ]]; then
             setup_log "---> 🔄 Updating MySQL password"
-            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/mysql/docker-compose.yml
+            sed -i "s/your_secure_password/$MYSQL_PASSWORD/g" $PROXY_FULL_PATH/templates/mysql/docker-stack.yml
             install_report "---> MYSQL_PASSWORD: $MYSQL_PASSWORD"
         fi
 
-        if [[ ! -z $POSTGRES_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/postgres/docker-compose.yml ]]; then
+        if [[ ! -z $POSTGRES_PASSWORD && -e $PROXY_FULL_PATH/templates/postgres/docker-stack.yml ]]; then
             setup_log "---> 🔄 Updating PostgreSQL password"
-            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/postgres/docker-compose.yml
+            sed -i "s/your_secure_password/$POSTGRES_PASSWORD/g" $PROXY_FULL_PATH/templates/postgres/docker-stack.yml
             install_report "---> POSTGRES_PASSWORD: $POSTGRES_PASSWORD"
         fi
 
-        if [[ ! -z $REDIS_PASSWORD && -e $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/redis/docker-compose.yml ]]; then
+        if [[ ! -z $REDIS_PASSWORD && -e $PROXY_FULL_PATH/templates/redis/docker-stack.yml ]]; then
             setup_log "---> 🔄 Updating Redis password"
-            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/redis/docker-compose.yml
+            sed -i "s/your_secure_password/$REDIS_PASSWORD/g" $PROXY_FULL_PATH/templates/redis/docker-stack.yml
             install_report "---> REDIS_PASSWORD: $REDIS_PASSWORD"
         fi
 
-        if [[ ! -z $TRAEFIK_CREDENTIALS && -e "$PROXY_FULL_PATH/docker-compose.yml" ]]; then
+        if [[ ! -z $TRAEFIK_CREDENTIALS && -e "$PROXY_FULL_PATH/docker-stack.yml" ]]; then
             setup_log "---> 🔄 Updating Traefik password"
 
             OLD_TRAEFIK_CREDENTIALS='admin:$$2y$$05$$IbYykP9bwz8PAhYBxvDkAOdEwMkMvdUvE86OO8EcEAp16Otddn4a6'
-            sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" "$PROXY_FULL_PATH/docker-compose.yml"
+            sed -i "s/$OLD_TRAEFIK_CREDENTIALS/$TRAEFIK_CREDENTIALS/g" "$PROXY_FULL_PATH/docker-stack.yml"
             install_report "---> TRAEFIK_PASSWORD: $TRAEFIK_PASSWORD"
 
             if [[ ! -e "$PROXY_FULL_PATH/acme.json" ]]; then
@@ -390,32 +361,22 @@ function setup_proxy() {
             create_docker_network $NETWORK_NAME
         done
 
-        if $SWARM_MODE; then
-            setup_log "---> ⚡ Deploying the stack to the swarm"
-            docker stack deploy --compose-file "$PROXY_FULL_PATH/docker-stack.yml" $TEMPLATE
-        else
-            setup_log "---> ⚡ Starting reverse proxy containers"
-            docker compose -f "$PROXY_FULL_PATH/docker-compose.yml" up -d
-        fi
+        setup_log "---> ⚡ Deploying the stack to the swarm"
+        docker stack deploy --compose-file "$PROXY_FULL_PATH/docker-stack.yml" traefik-proxy
 
         install_report "Services started"
-        install_report "$PROXY_FULL_PATH/docker-compose.yml"
+        install_report "$PROXY_FULL_PATH/docker-stack.yml"
 
         # Moves the app folder to the working directory root
         if [[ ! -z $APP_TEMPLATES ]]; then
             for APP in $(echo $APP_TEMPLATES | sed "s/,/ /g"); do
-                if [ -d "$PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/$APP" ]; then
-                    mv "$PROXY_FULL_PATH/templates/$TEMPLATE_TYPE/$APP" "$DEFAULT_WORKDIR/apps/$APP"
+                if [ -d "$PROXY_FULL_PATH/templates/$APP" ]; then
+                    mv "$PROXY_FULL_PATH/templates/$APP" "$DEFAULT_WORKDIR/apps/$APP"
 
-                    if $SWARM_MODE; then
-                        setup_log "---> ⚡ Deploying $APP stack"
-                        docker stack deploy --compose-file "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" $APP
-                    else
-                        setup_log "---> ⚡ Starting $APP container"
-                        docker compose -f "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" up -d
-                    fi
+                    setup_log "---> ⚡ Deploying $APP stack"
+                    docker stack deploy --compose-file "$DEFAULT_WORKDIR/apps/$APP/docker-stack.yml" $APP
 
-                    install_report "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml"
+                    install_report "$DEFAULT_WORKDIR/apps/$APP/docker-stack.yml"
                 else
                     setup_log "---> ❌ App $APP files not found. Skipping..."
                 fi
@@ -455,12 +416,10 @@ else
     setup_log "---> 🐳 Installing docker"
     curl -fsSL get.docker.com -o get-docker.sh && sh get-docker.sh
 
-    if $SWARM_MODE; then
-        setup_log "---> 🔄 Starting Swarm Mode"
-        SWARM_LOG=`docker swarm init --advertise-addr $IP_ADRESS`
-        SWARM_TOKEN_MANAGER=`docker swarm join-token manager -q`
-        SWARM_TOKEN_WORKER=`docker swarm join-token worker -q`
-    fi
+    setup_log "---> 🔄 Starting Swarm Mode"
+    SWARM_LOG=`docker swarm init --advertise-addr $IP_ADRESS`
+    SWARM_TOKEN_MANAGER=`docker swarm join-token manager -q`
+    SWARM_TOKEN_WORKER=`docker swarm join-token worker -q`
 fi
 
 # Set root password
@@ -559,9 +518,7 @@ for SPACE in $(echo $SPACES | sed "s/,/ /g"); do
     fi
 done
 
-if $INSTALL_PROXY; then
-    setup_proxy $TEMPLATE
-fi
+setup_proxy traefik-proxy
 
 setup_log "---> 🧹 Cleaning up"
 apt-get autoremove -y
@@ -590,12 +547,10 @@ if [[ ! -z $WEBHOOK_URL ]]; then
 
             "WORKDIR": "$DEFAULT_WORKDIR",
             "DOCKER_NETWORKS": "$DOCKER_NETWORKS",
-            "TEMPLATE": "$TEMPLATE",
             "APP_TEMPLATES": "$APP_TEMPLATES",
             "YOUR_DOMAIN": "$YOUR_DOMAIN",
             "YOUR_EMAIL": "$YOUR_EMAIL",
 
-            "SWARM_MODE": "$SWARM_MODE",
             "SWARM_LOG":  "$SWARM_LOG",            
             "SWARM_TOKEN_MANAGER": "$SWARM_TOKEN_MANAGER",
             "SWARM_TOKEN_WORKER": "$SWARM_TOKEN_WORKER",
