@@ -106,9 +106,9 @@ ssh-copy-id <USERNAME>@<SERVER IP>
 
 If you are looking for a template for fast configuration of docker containers for reverse proxy, automatic configuration of virtualhosts and generation of SSL certificates with Let's Encrypt, see the repositories:
 
- * [cubedserver/docker-traefik-proxy](https://github.com/cubedserver/docker-traefik-proxy)
+ * [docker-traefik-proxy](https://github.com/cubedserver/server-setup/tree/main/traefik-proxy)
 
- * [cubedserver/docker-nginx-proxy](https://github.com/cubedserver/docker-nginx-proxy)
+ * [docker-nginx-proxy](https://github.com/cubedserver/server-setup/tree/main/nginx-proxy)
 
 ## Contributing
 

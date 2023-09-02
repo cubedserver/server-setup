@@ -14,7 +14,7 @@ Template for quick configuration of Docker containers for reverse proxy with [Tr
 
 ## Installation
 
-1. [Download](https://github.com/cubedserver/docker-traefik-proxy/archive/main.zip) the latest version
+1. [Download](https://github.com/cubedserver/server-setup/tree/main/traefik-proxy) the latest version
 2. Generate a password for the Traefik admin user: `htpasswd -nb admin your_secure_password`
 3. Edit the traefik_dynamic.toml file and update with the generated password
 4. Create a new Docker network called `web`

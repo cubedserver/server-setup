@@ -1,9 +1,8 @@
-version: "3.3"
+version: "3.7"
 
 services:
   whoami:
     image: "traefik/whoami"
-    container_name: whoami
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.yourdomain.local`)"

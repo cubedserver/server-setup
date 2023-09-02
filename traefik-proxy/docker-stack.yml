@@ -1,8 +1,8 @@
-version: "3.3"
+version: "3.7"
 
 services:
   traefik:
-    image: "traefik:latest"
+    image: "traefik:v2.10"
     command:
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443

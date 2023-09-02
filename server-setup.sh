@@ -9,8 +9,8 @@ EXAMPLE_EMAIL=email@yourdomain.local
 ROOT_SSH_PASSPHRASE=
 
 # Defaults
-: ${TEMPLATE_NGINX_URL:='https://github.com/cubedserver/docker-nginx-proxy/archive/main.zip'}
-: ${TEMPLATE_TRAEFIK_URL:='https://github.com/cubedserver/docker-traefik-proxy/archive/main.zip'}
+: ${TEMPLATE_URL:='https://github.com/cubedserver/server-setup/archive/refs/heads/main.zip'}
+: ${ORIGINAL_NAME:='server-setup'}
 
 : ${YOUR_DOMAIN:='yourdomain.local'}
 : ${YOUR_EMAIL:='email@yourdomain.local'}
@@ -18,6 +18,7 @@ ROOT_SSH_PASSPHRASE=
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
 : ${SPACES:='apps,backups'}
 : ${TEMPLATE:='nginx'}
+: ${DOCKER_NETWORKS:='web,internal'}
 : ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 
 : ${DEFAULT_TIMEZONE:='America/Sao_Paulo'}
@@ -241,7 +242,11 @@ function install_report() {
 function create_docker_network() {
     NETWORK_NAME=$1
     setup_log "---> ⚡ Creating Docker network $NETWORK_NAME"
-    docker network ls | grep $NETWORK_NAME >/dev/null || docker network create $NETWORK_NAME
+    if $SWARM_MODE; then
+        docker network ls | grep $NETWORK_NAME >/dev/null || docker network create --driver=overlay $NETWORK_NAME
+    else
+        docker network ls | grep $NETWORK_NAME >/dev/null || docker network create $NETWORK_NAME
+    fi
 }
 
 function ssh_keygen() {
@@ -293,16 +298,9 @@ function setup_proxy() {
     TEMPLATE=$1
 
     if [ $TEMPLATE == "nginx" ]; then
-        TEMPLATE_URL=$TEMPLATE_NGINX_URL
-        ORIGINAL_NAME=docker-nginx-proxy
         DIR_NAME=nginx-proxy
-        DOCKER_NETWORKS='nginx-proxy,internal'
     else
-        TEMPLATE_URL=$TEMPLATE_TRAEFIK_URL
-        ORIGINAL_NAME=docker-traefik-proxy
         DIR_NAME=traefik-proxy
-        DOCKER_NETWORKS='web,internal'
-
         TRAEFIK_CREDENTIALS=$(htpasswd -nbB admin "$TRAEFIK_PASSWORD" | sed -e s/\\$/\\$\\$/g)
     fi
 
@@ -335,7 +333,11 @@ function setup_proxy() {
             rm -rf $PROXY_FULL_PATH
         fi
 
-        unzip -q $FILE_ZIPED && rm $FILE_ZIPED && mv "$ORIGINAL_NAME-main" $PROXY_FULL_PATH
+        if [ -d "$ORIGINAL_NAME-main" ]; then
+            rm -rf $ORIGINAL_NAME-main
+        fi
+
+        unzip -q $FILE_ZIPED && mv "$ORIGINAL_NAME-main/$DIR_NAME" $PROXY_FULL_PATH && rm $FILE_ZIPED
 
         if [[ ! -z $YOUR_EMAIL ]]; then
             setup_log "---> 📧 Overriding $EXAMPLE_EMAIL to $YOUR_EMAIL email from configuration files"

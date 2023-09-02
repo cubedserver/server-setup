@@ -1,4 +1,4 @@
-version: "3.3"
+version: "3.7"
 
 services:
 
@@ -15,5 +15,5 @@ services:
       - "80"
 
 networks:
-  nginx-proxy:
+  web:
     external: true

@@ -1,9 +1,8 @@
-version: "3.3"
+version: "3.7"
 
 services:
   postgres:
     image: postgres:10
-    container_name: postgres
     restart: always
     environment:
       - POSTGRES_PASSWORD=your_secure_password

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-: ${DOCKER_NETWORKS:='nginx-proxy,internal'}
+: ${DOCKER_NETWORKS:='web,internal'}
 : ${DOCKER_COMPOSE_FILE:='docker-compose.yml'}
 : ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 : ${DEFAULT_WORKDIR:=`pwd`}
