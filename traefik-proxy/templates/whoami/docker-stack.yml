@@ -9,7 +9,7 @@ services:
       - "traefik.http.routers.whoami.entrypoints=web"
       - "traefik.port=80"
     networks:
-      - traefik-web
+      - web
 
 networks:
   web:

@@ -9,36 +9,22 @@ services:
       - --providers.docker=true
       - --providers.docker.swarmMode=true
       - --providers.docker.exposedbydefault=false
-      - --providers.docker.network=traefik-web
+      - --providers.docker.network=web
       - --providers.file.directory=/etc/certs/dynamic
-      - --certificatesresolvers.le.acme.httpchallenge=true
-      - --certificatesresolvers.le.acme.email=email@yourdomain.local #Set your email address here, is for the generation of SSL certificates with Let's Encrypt. 
-      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=web
       - --api
       - --log.level=ERROR
-      # - --certificatesresolvers.le.acme.storage=./acme.json
+      - --certificatesresolvers.lets-encrypt.acme.httpchallenge=true
+      - --certificatesresolvers.lets-encrypt.acme.email=email@yourdomain.local #Set your email address here, is for the generation of SSL certificates with Let's Encrypt. 
+      # - --certificatesresolvers.lets-encrypt.acme.storage=./acme.json
+      - --certificatesresolvers.lets-encrypt.acme.httpchallenge.entrypoint=web
 
     ports:
-      # Host mode is essential to work with IPv6
-      # Listen on port 80, default for HTTP, necessary to redirect to HTTPS
-      - target: 80
-        published: 80
-        mode: host
-        protocol: tcp
-      # Listen on port 443, default for HTTPS
-      - target: 443
-        published: 443
-        mode: host
-        protocol: tcp
-      # additional ports
-      - "9001:9001"
-      - "9002:9002"
-
+      - "80:80"
+      - "443:443"
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - traefik-data:/etc/certs #Volume where SSL certs are saved
       # - "./acme.json:/acme.json"
-
     labels:
       - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
       - "traefik.http.routers.http-catchall.entrypoints=web"
@@ -54,7 +40,7 @@ services:
       - "traefik.http.middlewares.admin.basicauth.users=admin:$$2y$$05$$IbYykP9bwz8PAhYBxvDkAOdEwMkMvdUvE86OO8EcEAp16Otddn4a6"
 
 networks:
-  traefik-web:
+  web:
     external: true
 
 volumes:

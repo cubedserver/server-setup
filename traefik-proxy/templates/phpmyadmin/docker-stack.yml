@@ -14,10 +14,10 @@ services:
         condition: any
     networks:
       - internal
-      - traefik-web
+      - web
 
 networks:
-  traefik-web:
+  web:
     external: true
   internal:
     external: false

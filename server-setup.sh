@@ -17,7 +17,7 @@ ROOT_SSH_PASSPHRASE=
 
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
 : ${SPACES:='apps,backups'}
-: ${DOCKER_NETWORKS:='traefik-web,internal'}
+: ${DOCKER_NETWORKS:='web,internal'}
 : ${APP_TEMPLATES:='portainer,mysql,postgres,redis,adminer,phpmyadmin,whoami'}
 
 : ${DEFAULT_TIMEZONE:='America/Sao_Paulo'}
