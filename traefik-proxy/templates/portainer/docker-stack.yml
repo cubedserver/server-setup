@@ -46,7 +46,7 @@ services:
       - "8000:8000"
     networks:
       - internal
-      - web
+      - traefik-web
     deploy:
       mode: replicated
       replicas: 1
@@ -54,9 +54,8 @@ services:
         constraints: [node.role == manager]
 
 networks:
-  web:
+  traefik-web:
     external: true
-
   internal:
     external: false
 

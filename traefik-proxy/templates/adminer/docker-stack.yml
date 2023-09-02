@@ -11,10 +11,10 @@ services:
       - "traefik.port=8080"
     networks:
       - internal
-      - web
+      - traefik-web
 
 networks:
-  web:
+  traefik-web:
     external: true
   internal:
     external: false
