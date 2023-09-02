@@ -4,14 +4,14 @@
   <img src="cover.svg" loading="lazy" />
 </div>
 
-Script to make initial configurations of Docker, Docker Compose and Reverse Proxy (Traefik or NGINX) on servers in Digital Ocean, Linone, AWS EC2 or similar.
+Script to make initial configurations of Docker, Docker Swarm and Reverse Proxy (Traefik or NGINX) on servers in Digital Ocean, Linone, AWS EC2 or similar.
 
 Performs the following configuration steps:
 
 * Definition of timezone
 * root user settings
 * Adds new default user for full privilege deploy
-* Install git, zip, unzip, curl, acl, docker and docker-compose
+* Install git, zip, unzip, curl, acl, docker
 * Adds github, gitlab and bitbucket to trusted hosts
 
 Tested on a VPS running Ubuntu Server 22.04 LTS with 4GB RAM, but can be used in similar distributions.
@@ -61,7 +61,6 @@ USAGE:
 OPTIONS:
 -h|--help                   Print help
 -t|--timezone               Standard system timezone
---docker-compose-version    Version of the docker compose to be installed
 --root-password             New root user password. The script forces the password update
 --default-user              Alternative user (with super powers) that will be used for deploys and remote access later
 --default-user-password

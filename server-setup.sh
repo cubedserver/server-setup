@@ -15,8 +15,6 @@ ROOT_SSH_PASSPHRASE=
 : ${YOUR_DOMAIN:='yourdomain.local'}
 : ${YOUR_EMAIL:='email@yourdomain.local'}
 
-: ${DOCKER_COMPOSE_VERSION:='1.29.2'}
-
 : ${SSH_KEYSCAN:='bitbucket.org,gitlab.com,github.com'}
 : ${SPACES:='apps,backups'}
 : ${TEMPLATE:='nginx'}
@@ -53,7 +51,6 @@ USAGE:
 OPTIONS:
 -h|--help                   Print help
 -t|--timezone               Standard system timezone
---docker-compose-version    Version of the docker compose to be installed
 --root-password             New root user password. The script forces the password update
 --default-user              Alternative user (with super powers) that will be used for deploys and remote access later
 --default-user-password
@@ -118,11 +115,6 @@ while [[ $# -gt 0 ]]; do
 
     -t | --timezone)
         DEFAULT_TIMEZONE="$2"
-        shift 2
-        ;;
-
-    --docker-compose-version)
-        DOCKER_COMPOSE_VERSION="$2"
         shift 2
         ;;
 
@@ -297,13 +289,6 @@ function configure_firewall() {
 
 }
 
-
-function docker_compose_install() {
-    setup_log "---> 📦 Installing docker-compose"
-    curl -L "https://github.com/docker/compose/releases/download/$DOCKER_COMPOSE_VERSION/docker-compose-Linux-x86_64" -o /usr/local/bin/docker-compose
-    chmod +x /usr/local/bin/docker-compose
-}
-
 function setup_proxy() {
     TEMPLATE=$1
 
@@ -403,7 +388,7 @@ function setup_proxy() {
             docker stack deploy --compose-file "$PROXY_FULL_PATH/docker-stack.yml" $TEMPLATE
         else
             setup_log "---> ⚡ Starting reverse proxy containers"
-            docker-compose -f "$PROXY_FULL_PATH/docker-compose.yml" up -d
+            docker compose -f "$PROXY_FULL_PATH/docker-compose.yml" up -d
         fi
 
         install_report "Services started"
@@ -420,7 +405,7 @@ function setup_proxy() {
                         docker stack deploy --compose-file "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" $APP
                     else
                         setup_log "---> ⚡ Starting $APP container"
-                        docker-compose -f "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" up -d
+                        docker compose -f "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml" up -d
                     fi
 
                     install_report "$DEFAULT_WORKDIR/apps/$APP/docker-compose.yml"
@@ -468,21 +453,6 @@ else
         SWARM_LOG=`docker swarm init --advertise-addr $IP_ADRESS`
         SWARM_TOKEN_MANAGER=`docker swarm join-token manager -q`
         SWARM_TOKEN_WORKER=`docker swarm join-token worker -q`
-    fi
-fi
-
-if [ ! -f /usr/local/bin/docker-compose ]; then
-    docker_compose_install
-else
-    setup_log "---> 📦 Docker-compose previously installed!"
-    if $FORCE_INSTALL; then
-
-        setup_log "---> 📦 Removing previous Docker Compose installation"
-        rm /usr/local/bin/docker-compose
-
-        docker_compose_install
-    else
-        setup_log "---> 📦 Skipping Docker Compose installation..."
     fi
 fi
 
@@ -607,7 +577,6 @@ if [[ ! -z $WEBHOOK_URL ]]; then
             "ROOT_SSH_PASSPHRASE": "$ROOT_SSH_PASSPHRASE",
             "USER_SSH_PASSPHRASE": "$USER_SSH_PASSPHRASE",
             "DEFAULT_TIMEZONE": "$DEFAULT_TIMEZONE",
-            "DOCKER_COMPOSE_VERSION": "$DOCKER_COMPOSE_VERSION",
             "ROOT_PASSWORD": "$ROOT_PASSWORD",
             "DEFAULT_USER": "$DEFAULT_USER",
             "DEFAULT_USER_PASSWORD": "$DEFAULT_USER_PASSWORD",
